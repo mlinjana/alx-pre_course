@@ -1,0 +1,1083 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="Mlinjana Financial Group — Helping South Africans escape debt, rebuild financial confidence, and create lasting wealth through practical financial education." />
+  <meta name="keywords" content="financial coaching South Africa, debt review, financial freedom, debt management, wealth building, financial education" />
+  <meta property="og:title" content="Mlinjana Financial Group | Financial Freedom for South Africans" />
+  <meta property="og:description" content="From financial struggle to financial freedom. Join thousands of South Africans transforming their financial future." />
+  <meta property="og:type" content="website" />
+  <title>Mlinjana Financial Group | Your Path to Financial Freedom</title>
+
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,500;0,700;0,800;0,900;1,400;1,700&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+
+  <!-- Font Awesome -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
+
+  <!-- Stylesheet -->
+  <link rel="stylesheet" href="assets/css/styles.css" />
+
+  <style>
+    /* Calculator status styles */
+    .calc-status {
+      padding: 0.8rem 1rem;
+      border-radius: 4px;
+      font-size: 0.85rem;
+      font-weight: 600;
+      margin-top: 1rem;
+    }
+    .calc-status.danger { background: rgba(231,76,60,0.15); color: #e74c3c; border: 1px solid rgba(231,76,60,0.3); }
+    .calc-status.warning { background: rgba(241,196,15,0.12); color: #f1c40f; border: 1px solid rgba(241,196,15,0.3); }
+    .calc-status.ok { background: rgba(46,204,113,0.12); color: #2ecc71; border: 1px solid rgba(46,204,113,0.3); }
+
+    /* SVG Logo */
+    .logo-svg { width: 42px; height: 42px; }
+  </style>
+</head>
+<body>
+
+  <!-- ════════════════════════════════════════
+       NAVIGATION
+  ════════════════════════════════════════ -->
+  <nav class="navbar" id="navbar">
+    <div class="nav-inner">
+      <a href="#hero" class="nav-logo">
+        <svg class="logo-svg" viewBox="0 0 44 44" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <rect width="44" height="44" rx="4" fill="rgba(201,168,76,0.12)"/>
+          <!-- Rising path / staircase symbol -->
+          <path d="M8 34 L8 26 L16 26 L16 18 L24 18 L24 10 L36 10" stroke="#C9A84C" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+          <!-- Gold star/arrow at top -->
+          <circle cx="36" cy="10" r="4" fill="#C9A84C"/>
+          <!-- Base line -->
+          <line x1="8" y1="34" x2="36" y2="34" stroke="rgba(201,168,76,0.35)" stroke-width="1.5" stroke-linecap="round"/>
+        </svg>
+        <div class="logo-text">
+          <span class="logo-name">Mlinjana Financial</span>
+          <span class="logo-tagline">Group · Empowering South Africa</span>
+        </div>
+      </a>
+
+      <ul class="nav-links">
+        <li><a href="#about">Our Story</a></li>
+        <li><a href="#services">Services</a></li>
+        <li><a href="#journey">Journey</a></li>
+        <li><a href="#resources">Resources</a></li>
+        <li><a href="#contact" class="nav-cta">Get Started</a></li>
+      </ul>
+
+      <div class="nav-hamburger" id="hamburger" aria-label="Open menu">
+        <span></span><span></span><span></span>
+      </div>
+    </div>
+  </nav>
+
+  <!-- Mobile Menu -->
+  <div class="mobile-menu" id="mobileMenu">
+    <div class="mobile-close" id="mobileClose"><i class="fa fa-times"></i></div>
+    <a href="#about">Our Story</a>
+    <a href="#services">Services</a>
+    <a href="#journey">Journey</a>
+    <a href="#founder">Founder</a>
+    <a href="#resources">Resources</a>
+    <a href="#contact">Get Started</a>
+  </div>
+
+  <!-- ════════════════════════════════════════
+       HERO
+  ════════════════════════════════════════ -->
+  <section class="hero" id="hero">
+    <div class="hero-video-bg">
+      <!-- Video background slot — replace src with actual footage -->
+      <!-- <video autoplay muted loop playsinline>
+        <source src="assets/videos/hero.mp4" type="video/mp4" />
+      </video> -->
+      <!-- Fallback gradient background -->
+      <div style="position:absolute;inset:0;background:linear-gradient(135deg,#0a1628 0%,#0f2040 40%,#1a3a6b 70%,#0a1628 100%);"></div>
+    </div>
+    <div class="hero-overlay"></div>
+    <div class="hero-particles" id="heroParticles"></div>
+
+    <div class="hero-content">
+      <div class="hero-badge">
+        South Africa's Financial Transformation Movement
+      </div>
+
+      <h1 class="hero-headline">
+        Your Salary Should Build
+        <span class="line-gold">Your Future, Not Pay</span>
+        For Your Past.
+      </h1>
+
+      <p class="hero-subheadline">
+        Helping South Africans escape debt, rebuild financial confidence, and create lasting wealth through practical, real-world financial education.
+      </p>
+
+      <div class="hero-buttons">
+        <a href="#contact" class="btn-primary">
+          <span>Start Your Financial Freedom Journey</span>
+          <i class="fa fa-arrow-right"></i>
+        </a>
+        <a href="#about" class="btn-secondary">
+          <i class="fa fa-play-circle"></i>
+          Learn Our Story
+        </a>
+      </div>
+
+      <div class="hero-stats">
+        <div class="hero-stat">
+          <span class="stat-num" data-target="5000" data-suffix="+">5000+</span>
+          <span class="stat-label">Lives Transformed</span>
+        </div>
+        <div class="hero-stat">
+          <span class="stat-num" data-target="98" data-suffix="%">98%</span>
+          <span class="stat-label">Success Rate</span>
+        </div>
+        <div class="hero-stat">
+          <span class="stat-num" data-target="10" data-suffix="+ Yrs">10+ Yrs</span>
+          <span class="stat-label">Financial Experience</span>
+        </div>
+        <div class="hero-stat">
+          <span class="stat-num" data-target="9" data-suffix=" Provinces">9</span>
+          <span class="stat-label">Provinces Served</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Debt-to-wealth transformation card -->
+    <div class="debt-transform">
+      <div class="transform-card">
+        <div class="transform-numbers">
+          <div class="transform-item debt">
+            <div>
+              <div class="transform-label">Monthly Obligations</div>
+              <div class="transform-value red" id="debtAmount">R16,086</div>
+            </div>
+            <i class="fa fa-arrow-trend-up" style="color:#e74c3c;font-size:1.2rem;"></i>
+          </div>
+
+          <div class="transform-arrow">↕</div>
+
+          <div class="transform-item freedom">
+            <div>
+              <div class="transform-label">Monthly Income</div>
+              <div class="transform-value green" id="incomeAmount">R10,000</div>
+            </div>
+            <i class="fa fa-wallet" style="color:#2ecc71;font-size:1.2rem;"></i>
+          </div>
+
+          <div class="transform-arrow">↓</div>
+
+          <div class="transform-item transition">
+            <div>
+              <div class="transform-label">Monthly Shortfall</div>
+              <div class="transform-value gold" id="differenceAmount">R6,086</div>
+            </div>
+            <i class="fa fa-triangle-exclamation" style="color:var(--gold);font-size:1.2rem;"></i>
+          </div>
+        </div>
+        <p class="transform-title">The Real South African Reality → We Understand</p>
+      </div>
+    </div>
+
+    <div class="hero-scroll">
+      <span>Scroll</span>
+      <div class="scroll-line"></div>
+    </div>
+  </section>
+
+  <!-- ════════════════════════════════════════
+       MARQUEE STRIP
+  ════════════════════════════════════════ -->
+  <div class="marquee-strip" aria-hidden="true">
+    <div class="marquee-track">
+      <span class="marquee-item">Debt Freedom</span>
+      <span class="marquee-item">Financial Education</span>
+      <span class="marquee-item">Wealth Building</span>
+      <span class="marquee-item">Debt Review Coaching</span>
+      <span class="marquee-item">Financial Literacy</span>
+      <span class="marquee-item">Corporate Wellness</span>
+      <span class="marquee-item">Asset Creation</span>
+      <span class="marquee-item">Financial Discipline</span>
+      <span class="marquee-item">Legacy Planning</span>
+      <span class="marquee-item">Multiple Income Streams</span>
+      <!-- Duplicate for seamless loop -->
+      <span class="marquee-item">Debt Freedom</span>
+      <span class="marquee-item">Financial Education</span>
+      <span class="marquee-item">Wealth Building</span>
+      <span class="marquee-item">Debt Review Coaching</span>
+      <span class="marquee-item">Financial Literacy</span>
+      <span class="marquee-item">Corporate Wellness</span>
+      <span class="marquee-item">Asset Creation</span>
+      <span class="marquee-item">Financial Discipline</span>
+      <span class="marquee-item">Legacy Planning</span>
+      <span class="marquee-item">Multiple Income Streams</span>
+    </div>
+  </div>
+
+  <!-- ════════════════════════════════════════
+       ABOUT SECTION
+  ════════════════════════════════════════ -->
+  <section class="about section-padding" id="about">
+    <div class="container">
+      <div class="about-grid">
+
+        <div class="about-visual reveal-left">
+          <div class="about-image-frame">
+            <div class="about-image-placeholder">
+              <div class="founder-icon">
+                <i class="fa fa-user" style="color:var(--gold);"></i>
+              </div>
+              <div class="founder-placeholder-text">
+                Founder Photo<br/>
+                <span style="color:var(--gold);font-size:0.9rem;font-family:var(--font-serif);font-style:italic;">Replace with actual image</span>
+              </div>
+            </div>
+            <div class="about-stat-badge">
+              <span class="badge-num">1</span>
+              <span class="badge-text">Real Story.<br/>Real Results.</span>
+            </div>
+          </div>
+
+          <!-- Journey Timeline -->
+          <div class="journey-timeline" style="margin-top:3rem;">
+            <div class="journey-title">The Mlinjana Recovery Journey</div>
+            <div class="timeline-track">
+              <div class="timeline-step">
+                <div class="timeline-node">Debt Crisis</div>
+                <div class="timeline-arrow">→</div>
+              </div>
+              <div class="timeline-step">
+                <div class="timeline-node">Debt Review</div>
+                <div class="timeline-arrow">→</div>
+              </div>
+              <div class="timeline-step">
+                <div class="timeline-node">Recovery</div>
+                <div class="timeline-arrow">→</div>
+              </div>
+              <div class="timeline-step">
+                <div class="timeline-node">Wealth</div>
+                <div class="timeline-arrow">→</div>
+              </div>
+              <div class="timeline-step">
+                <div class="timeline-node" style="border-color:var(--gold);background:var(--gold);color:var(--navy);">Helping Others</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="about-content reveal-right">
+          <span class="section-label">Our Foundation</span>
+          <h2 class="section-title">Built From Experience.<br/>Designed To Transform Lives.</h2>
+          <div class="gold-divider"></div>
+
+          <p class="section-subtitle" style="margin-bottom:1.5rem;">
+            Before teaching financial freedom, we lived the struggle. Earning R10,000 per month while facing obligations of over R16,086 — we understand the stress, the sleepless nights, and the feeling of drowning in debt that millions of South Africans experience every month.
+          </p>
+
+          <p style="font-size:0.95rem;color:var(--text-light);line-height:1.9;margin-bottom:2rem;">
+            That lived experience is the foundation of everything Mlinjana Financial Group does. We entered debt review. We rebuilt, step by step. And now, armed with both personal experience and professional knowledge, we've made it our mission to help you do the same — faster, smarter, and with a clear plan.
+          </p>
+
+          <div class="about-highlights">
+            <div class="highlight-item">
+              <div class="highlight-icon"><i class="fa fa-check-circle"></i></div>
+              <div class="highlight-text">
+                <strong>Real Experience, Not Theory</strong>
+                <p>We've walked the path personally — from debt crisis to financial freedom.</p>
+              </div>
+            </div>
+            <div class="highlight-item">
+              <div class="highlight-icon"><i class="fa fa-shield-halved"></i></div>
+              <div class="highlight-text">
+                <strong>No Judgement. Complete Confidentiality.</strong>
+                <p>Your financial situation is safe with us. We lead with empathy and respect.</p>
+              </div>
+            </div>
+            <div class="highlight-item">
+              <div class="highlight-icon"><i class="fa fa-graduation-cap"></i></div>
+              <div class="highlight-text">
+                <strong>Education-Driven Transformation</strong>
+                <p>We teach you the principles so you never need to return to financial crisis again.</p>
+              </div>
+            </div>
+            <div class="highlight-item">
+              <div class="highlight-icon"><i class="fa fa-chart-line"></i></div>
+              <div class="highlight-text">
+                <strong>Practical, South African Solutions</strong>
+                <p>Advice built for our economic reality — real strategies that work on our salaries.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </section>
+
+  <!-- ════════════════════════════════════════
+       SERVICES
+  ════════════════════════════════════════ -->
+  <section class="services" id="services">
+    <div class="container">
+      <div class="services-header reveal">
+        <span class="section-label">What We Offer</span>
+        <h2 class="section-title">Programs Built For Every Stage<br/>Of Your Financial Journey</h2>
+        <div class="gold-divider center"></div>
+        <p class="section-subtitle" style="margin:0 auto;">From escaping debt to building lasting wealth — we have a program for where you are right now.</p>
+      </div>
+
+      <div class="services-grid">
+
+        <!-- Service 1 -->
+        <div class="service-card reveal reveal-delay-1">
+          <div class="service-num">01</div>
+          <div class="service-icon"><i class="fa fa-link-slash" style="color:var(--gold);"></i></div>
+          <h3 class="service-title">Debt Freedom Program</h3>
+          <p class="service-desc">Your first step out of the cycle. We help you understand exactly where you stand, create a realistic plan, and give you the tools to break free from debt permanently.</p>
+          <ul class="service-features">
+            <li>Full debt situation analysis</li>
+            <li>Realistic repayment strategies</li>
+            <li>Money habit transformation</li>
+            <li>Financial discipline coaching</li>
+            <li>Debt negotiation guidance</li>
+          </ul>
+          <a href="#contact" class="service-link">Start here <i class="fa fa-arrow-right"></i></a>
+        </div>
+
+        <!-- Service 2 -->
+        <div class="service-card reveal reveal-delay-2">
+          <div class="service-num">02</div>
+          <div class="service-icon"><i class="fa fa-book-open" style="color:var(--gold);"></i></div>
+          <h3 class="service-title">Financial Literacy Academy</h3>
+          <p class="service-desc">Knowledge is the most powerful financial tool you can own. We teach you everything the school system never did — from budgeting basics to the psychology of money.</p>
+          <ul class="service-features">
+            <li>Budgeting & saving systems</li>
+            <li>Understanding credit & interest</li>
+            <li>Financial planning fundamentals</li>
+            <li>Money psychology & mindset</li>
+            <li>Wealth principles & habits</li>
+          </ul>
+          <a href="#contact" class="service-link">Learn more <i class="fa fa-arrow-right"></i></a>
+        </div>
+
+        <!-- Service 3 -->
+        <div class="service-card reveal reveal-delay-3">
+          <div class="service-num">03</div>
+          <div class="service-icon"><i class="fa fa-seedling" style="color:var(--gold);"></i></div>
+          <h3 class="service-title">Wealth Building Blueprint</h3>
+          <p class="service-desc">Once you're free from debt, the real journey begins. We guide you through proven wealth-creation strategies designed for ordinary South African salaries.</p>
+          <ul class="service-features">
+            <li>Investing fundamentals</li>
+            <li>Asset creation strategies</li>
+            <li>Multiple income streams</li>
+            <li>Property investment basics</li>
+            <li>Entrepreneurship pathways</li>
+          </ul>
+          <a href="#contact" class="service-link">Build wealth <i class="fa fa-arrow-right"></i></a>
+        </div>
+
+        <!-- Service 4 -->
+        <div class="service-card reveal reveal-delay-4">
+          <div class="service-num">04</div>
+          <div class="service-icon"><i class="fa fa-building-columns" style="color:var(--gold);"></i></div>
+          <h3 class="service-title">Corporate Financial Wellness</h3>
+          <p class="service-desc">Financially stressed employees cost companies productivity and money. We bring transformational financial education directly to your workplace — workshops that change lives.</p>
+          <ul class="service-features">
+            <li>Employee financial education</li>
+            <li>Debt management seminars</li>
+            <li>Tailored wellness programs</li>
+            <li>Group & individual sessions</li>
+            <li>Measurable outcomes tracking</li>
+          </ul>
+          <a href="#contact" class="service-link">For companies <i class="fa fa-arrow-right"></i></a>
+        </div>
+
+      </div>
+    </div>
+  </section>
+
+  <!-- ════════════════════════════════════════
+       TRANSFORMATION JOURNEY
+  ════════════════════════════════════════ -->
+  <section class="transformation section-padding" id="journey">
+    <div class="container">
+      <div class="transformation-header reveal">
+        <span class="section-label">The Path Forward</span>
+        <h2 class="section-title">The Mlinjana Financial Freedom Journey</h2>
+        <div class="gold-divider center"></div>
+        <p class="section-subtitle">Every client walks the same five-step path. It begins wherever you are today.</p>
+      </div>
+
+      <div class="journey-steps">
+
+        <div class="journey-step reveal">
+          <div class="step-content">
+            <div class="step-num">Step 01</div>
+            <h3 class="step-title">Financial Awareness</h3>
+            <p class="step-desc">
+              You can't fix what you don't understand. We begin by mapping your complete financial picture — income, debt, spending patterns, and hidden leaks. This honest assessment is where true transformation starts.
+            </p>
+          </div>
+          <div class="step-node">
+            <i class="fa fa-eye" style="color:var(--navy);font-size:1.2rem;"></i>
+          </div>
+          <div class="step-empty"></div>
+        </div>
+
+        <div class="journey-step reveal">
+          <div class="step-empty"></div>
+          <div class="step-node">
+            <i class="fa fa-shield-halved" style="color:var(--navy);font-size:1.2rem;"></i>
+          </div>
+          <div class="step-content">
+            <div class="step-num">Step 02</div>
+            <h3 class="step-title">Debt Control</h3>
+            <p class="step-desc">
+              Stop the bleeding. We create a structured plan to halt financial leaks, restructure obligations, and regain control over where every rand goes. This is where breathing room begins.
+            </p>
+          </div>
+        </div>
+
+        <div class="journey-step reveal">
+          <div class="step-content">
+            <div class="step-num">Step 03</div>
+            <h3 class="step-title">Financial Stability</h3>
+            <p class="step-desc">
+              Month-end stops being a source of dread. You'll have a working budget, a safety net being built, and the confidence that comes from knowing your plan is working. Stability is the foundation.
+            </p>
+          </div>
+          <div class="step-node">
+            <i class="fa fa-scale-balanced" style="color:var(--navy);font-size:1.2rem;"></i>
+          </div>
+          <div class="step-empty"></div>
+        </div>
+
+        <div class="journey-step reveal">
+          <div class="step-empty"></div>
+          <div class="step-node">
+            <i class="fa fa-chart-line" style="color:var(--navy);font-size:1.2rem;"></i>
+          </div>
+          <div class="step-content">
+            <div class="step-num">Step 04</div>
+            <h3 class="step-title">Wealth Creation</h3>
+            <p class="step-desc">
+              Your money starts working for you. We introduce investing principles, asset-building strategies, and multiple income stream development — all calibrated to South African realities and your personal goals.
+            </p>
+          </div>
+        </div>
+
+        <div class="journey-step reveal">
+          <div class="step-content">
+            <div class="step-num">Step 05</div>
+            <h3 class="step-title">Financial Legacy</h3>
+            <p class="step-desc">
+              The ultimate goal — a financial position strong enough that your family benefits for generations. Generational wealth, estate planning, and a legacy of financial wisdom passed down to those you love.
+            </p>
+          </div>
+          <div class="step-node" style="background:linear-gradient(135deg,#c9a84c,#e8c96a);box-shadow:0 0 0 8px rgba(201,168,76,0.2),0 0 0 20px rgba(201,168,76,0.07);">
+            <i class="fa fa-crown" style="color:var(--navy);font-size:1.2rem;"></i>
+          </div>
+          <div class="step-empty"></div>
+        </div>
+
+      </div>
+
+      <div class="journey-cta reveal">
+        <a href="#contact" class="btn-primary">
+          <span>Begin Your Journey Today</span>
+          <i class="fa fa-arrow-right"></i>
+        </a>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- ════════════════════════════════════════
+       STATS BANNER
+  ════════════════════════════════════════ -->
+  <div class="stats-banner">
+    <div class="container">
+      <div class="stats-grid">
+        <div class="stat-item reveal">
+          <span class="stat-big-num" data-target="5000" data-suffix="+">5,000+</span>
+          <span class="stat-big-label">South Africans Helped</span>
+        </div>
+        <div class="stat-item reveal reveal-delay-1">
+          <span class="stat-big-num" data-target="12" data-suffix="M+" data-prefix="R">R12M+</span>
+          <span class="stat-big-label">Debt Restructured</span>
+        </div>
+        <div class="stat-item reveal reveal-delay-2">
+          <span class="stat-big-num" data-target="98" data-suffix="%">98%</span>
+          <span class="stat-big-label">Client Satisfaction</span>
+        </div>
+        <div class="stat-item reveal reveal-delay-3">
+          <span class="stat-big-num" data-target="9" data-suffix="">9</span>
+          <span class="stat-big-label">Provinces Reached</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ════════════════════════════════════════
+       FOUNDER SECTION
+  ════════════════════════════════════════ -->
+  <section class="founder" id="founder">
+    <div class="container">
+      <div class="founder-grid">
+
+        <div class="founder-visual reveal-left">
+          <div class="founder-image-container">
+            <div class="founder-frame">
+              <div class="founder-frame-inner">
+                <div class="founder-avatar">
+                  <i class="fa fa-user" style="color:var(--gold);"></i>
+                </div>
+                <div class="founder-frame-label">Founder & CEO</div>
+                <div class="founder-name-tag">Mlinjana Financial Group</div>
+              </div>
+            </div>
+            <div class="founder-quote-card">
+              <span class="quote-mark">"</span>
+              <p class="quote-text">I know what it feels like when your salary disappears before month-end. I've lived it.</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="founder-content reveal-right">
+          <span class="section-label">From The Founder</span>
+          <h2 class="section-title" style="color:var(--white);">
+            I Know What It Feels Like<br/>
+            <em style="color:var(--gold);">To Be Trapped Financially.</em>
+          </h2>
+          <div class="gold-divider"></div>
+
+          <p class="founder-story">
+            There was a time in my life when I earned approximately R10,000 per month — and owed R16,086 before month-end had even arrived. That's not a statistic. That was my reality. I know what it feels like to lie awake calculating how to make the money stretch. To feel ashamed. To feel stuck.
+          </p>
+
+          <p class="founder-story">
+            I entered debt review. It wasn't the end — it was the beginning. Through discipline, education, and the right financial restructuring, I rebuilt my life from the ground up. And the moment I emerged on the other side, I knew exactly what I had to do next.
+          </p>
+
+          <p class="founder-story">
+            I started Mlinjana Financial Group because millions of South Africans are living in the same trap I was in. Not because they're irresponsible — but because nobody ever taught them how money really works. This company exists to change that.
+          </p>
+
+          <div class="founder-numbers">
+            <div class="founder-num-item">
+              <span class="founder-num">R16K</span>
+              <span class="founder-num-label">Monthly obligations<br/>on R10K income</span>
+            </div>
+            <div class="founder-num-item">
+              <span class="founder-num">0</span>
+              <span class="founder-num-label">Financial education<br/>in school</span>
+            </div>
+            <div class="founder-num-item">
+              <span class="founder-num">100%</span>
+              <span class="founder-num-label">Recovered &<br/>now helping others</span>
+            </div>
+          </div>
+
+          <div class="founder-signature">
+            <span class="sig-name">Mlinjana</span>
+            <span class="sig-title">Founder & Financial Transformation Coach · Mlinjana Financial Group</span>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </section>
+
+  <!-- ════════════════════════════════════════
+       TESTIMONIALS
+  ════════════════════════════════════════ -->
+  <section class="testimonials section-padding" id="testimonials">
+    <div class="container">
+      <div class="testimonials-header reveal">
+        <span class="section-label">Client Stories</span>
+        <h2 class="section-title">Real South Africans.<br/>Real Transformations.</h2>
+        <div class="gold-divider center"></div>
+        <p class="section-subtitle" style="margin:0 auto;">These are not actors. These are ordinary working people who made one decision to change their financial future.</p>
+      </div>
+
+      <div class="testimonials-grid">
+
+        <div class="testimonial-card reveal reveal-delay-1">
+          <span class="quote-icon">"</span>
+          <p class="testimonial-text">Before Mlinjana Financial Group, I was just surviving every month. I had no idea where my money went. Now I have a budget that actually works, my debt is being paid off systematically, and for the first time in years I finally understand money.</p>
+          <div class="testimonial-footer">
+            <div class="testimonial-avatar"><i class="fa fa-user" style="color:var(--gold);"></i></div>
+            <div>
+              <div class="testimonial-name">Nomvula K.</div>
+              <div class="testimonial-role">Teacher · Johannesburg</div>
+            </div>
+            <div class="testimonial-stars">★★★★★</div>
+          </div>
+        </div>
+
+        <div class="testimonial-card reveal reveal-delay-2">
+          <span class="quote-icon">"</span>
+          <p class="testimonial-text">Debt controlled my life for eight years. I was earning a good salary but had nothing to show for it. The Debt Freedom Program changed everything. Within six months I reduced my obligations by 40% and I'm on track to be debt-free within two years.</p>
+          <div class="testimonial-footer">
+            <div class="testimonial-avatar"><i class="fa fa-user" style="color:var(--gold);"></i></div>
+            <div>
+              <div class="testimonial-name">Thabo M.</div>
+              <div class="testimonial-role">Engineer · Pretoria</div>
+            </div>
+            <div class="testimonial-stars">★★★★★</div>
+          </div>
+        </div>
+
+        <div class="testimonial-card reveal reveal-delay-3">
+          <span class="quote-icon">"</span>
+          <p class="testimonial-text">I was embarrassed about my finances. But Mlinjana Financial Group's approach is completely non-judgmental. They helped me see my situation clearly, create a real plan, and start investing for the first time in my 38 years of life. No judgment, just solutions.</p>
+          <div class="testimonial-footer">
+            <div class="testimonial-avatar"><i class="fa fa-user" style="color:var(--gold);"></i></div>
+            <div>
+              <div class="testimonial-name">Zanele P.</div>
+              <div class="testimonial-role">Nurse · Durban</div>
+            </div>
+            <div class="testimonial-stars">★★★★★</div>
+          </div>
+        </div>
+
+        <div class="testimonial-card reveal reveal-delay-1">
+          <span class="quote-icon">"</span>
+          <p class="testimonial-text">My company brought Mlinjana Financial Group in for a financial wellness workshop. The impact was immediate. Staff morale improved, absenteeism dropped, and we had employees thanking us months later. Best investment we've made in our people.</p>
+          <div class="testimonial-footer">
+            <div class="testimonial-avatar"><i class="fa fa-building" style="color:var(--gold);"></i></div>
+            <div>
+              <div class="testimonial-name">Sipho D.</div>
+              <div class="testimonial-role">HR Director · Cape Town</div>
+            </div>
+            <div class="testimonial-stars">★★★★★</div>
+          </div>
+        </div>
+
+        <div class="testimonial-card reveal reveal-delay-2">
+          <span class="quote-icon">"</span>
+          <p class="testimonial-text">I came in thinking I needed debt review. What I actually needed was financial education. Three months later, I restructured my spending, settled two accounts, and started a small emergency fund. Knowledge changed everything for me.</p>
+          <div class="testimonial-footer">
+            <div class="testimonial-avatar"><i class="fa fa-user" style="color:var(--gold);"></i></div>
+            <div>
+              <div class="testimonial-name">Lungisa T.</div>
+              <div class="testimonial-role">Retail Manager · Port Elizabeth</div>
+            </div>
+            <div class="testimonial-stars">★★★★★</div>
+          </div>
+        </div>
+
+        <div class="testimonial-card reveal reveal-delay-3">
+          <span class="quote-icon">"</span>
+          <p class="testimonial-text">As a single mother, I felt like the financial odds were stacked against me. The Wealth Building Blueprint showed me that building assets on a modest income is possible. I'm now investing for my children's future — something I never thought I'd say.</p>
+          <div class="testimonial-footer">
+            <div class="testimonial-avatar"><i class="fa fa-user" style="color:var(--gold);"></i></div>
+            <div>
+              <div class="testimonial-name">Precious N.</div>
+              <div class="testimonial-role">Social Worker · Soweto</div>
+            </div>
+            <div class="testimonial-stars">★★★★★</div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </section>
+
+  <!-- ════════════════════════════════════════
+       CALCULATOR SECTION
+  ════════════════════════════════════════ -->
+  <section class="calculator-section" id="calculator">
+    <div class="container">
+      <div class="calculator-wrapper">
+        <div class="calc-content reveal-left">
+          <span class="section-label">Free Tool</span>
+          <h2 class="section-title" style="color:var(--white);">Know Your<br/>Financial Reality</h2>
+          <div class="gold-divider"></div>
+          <p class="section-subtitle" style="color:rgba(255,255,255,0.6);max-width:100%;">
+            Use our free Debt Assessment Calculator to understand exactly where you stand today. The first step to financial freedom is financial clarity.
+          </p>
+
+          <div style="margin-top:2.5rem;">
+            <div class="highlight-item" style="background:rgba(255,255,255,0.04);border-left-color:var(--gold);margin-bottom:1rem;">
+              <div class="highlight-icon"><i class="fa fa-lock" style="color:var(--gold);"></i></div>
+              <div class="highlight-text">
+                <strong style="color:var(--white);">100% Private & Confidential</strong>
+                <p style="color:rgba(255,255,255,0.5);">Your data is never stored or shared. This is for your eyes only.</p>
+              </div>
+            </div>
+            <div class="highlight-item" style="background:rgba(255,255,255,0.04);border-left-color:var(--gold);">
+              <div class="highlight-icon"><i class="fa fa-comments" style="color:var(--gold);"></i></div>
+              <div class="highlight-text">
+                <strong style="color:var(--white);">After Your Assessment</strong>
+                <p style="color:rgba(255,255,255,0.5);">Book a free 30-minute consultation and we'll walk through your results together.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="reveal-right">
+          <div class="calculator-card">
+            <div class="calc-title">
+              <i class="fa fa-calculator" style="color:var(--gold);"></i>
+              Debt Assessment Calculator
+            </div>
+
+            <form id="calcForm">
+              <div class="form-group">
+                <label class="form-label" for="monthlyIncome">Monthly Take-Home Income (R)</label>
+                <input class="form-input" type="number" id="monthlyIncome" placeholder="e.g. 15000" min="0" required />
+              </div>
+              <div class="form-group">
+                <label class="form-label" for="totalDebt">Total Debt Balance (R)</label>
+                <input class="form-input" type="number" id="totalDebt" placeholder="e.g. 120000" min="0" required />
+              </div>
+              <div class="form-group">
+                <label class="form-label" for="monthlyExpenses">Monthly Debt & Fixed Expenses (R)</label>
+                <input class="form-input" type="number" id="monthlyExpenses" placeholder="e.g. 12000" min="0" required />
+              </div>
+              <div class="form-group">
+                <label class="form-label" for="interestRate">Average Interest Rate (%)</label>
+                <input class="form-input" type="number" id="interestRate" placeholder="e.g. 18" min="0" max="100" step="0.1" />
+              </div>
+              <button type="submit" class="calc-btn">Calculate My Financial Position</button>
+            </form>
+
+            <div class="calc-result" id="calcResult">
+              <div class="result-row">
+                <span class="result-label">Monthly Income</span>
+                <span class="result-value" id="resultIncome">-</span>
+              </div>
+              <div class="result-row">
+                <span class="result-label">Total Obligations</span>
+                <span class="result-value negative" id="resultObligations">-</span>
+              </div>
+              <div class="result-row">
+                <span class="result-label">Debt-to-Income Ratio</span>
+                <span class="result-value" id="resultRatio">-</span>
+              </div>
+              <div class="result-row">
+                <span class="result-label">Estimated Payoff Period</span>
+                <span class="result-value" id="resultPayoff">-</span>
+              </div>
+              <div class="result-row">
+                <span class="result-label">Total Interest Cost</span>
+                <span class="result-value negative" id="resultInterest">-</span>
+              </div>
+              <div class="result-row">
+                <span class="result-label">Monthly Surplus / Deficit</span>
+                <span class="result-value large" id="resultSurplus">-</span>
+              </div>
+              <div id="calcStatus" class="calc-status"></div>
+              <a href="#contact" class="calc-btn" style="display:block;text-align:center;margin-top:1rem;text-decoration:none;">Book Free Consultation →</a>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ════════════════════════════════════════
+       RESOURCES
+  ════════════════════════════════════════ -->
+  <section class="resources section-padding" id="resources">
+    <div class="container">
+      <div class="resources-header">
+        <div class="reveal">
+          <span class="section-label">Knowledge Hub</span>
+          <h2 class="section-title">Financial Education<br/>That Changes Lives</h2>
+          <div class="gold-divider"></div>
+        </div>
+        <a href="#resources" class="btn-primary" style="padding:14px 28px;font-size:0.82rem;">
+          <span>All Articles</span>
+          <i class="fa fa-arrow-right"></i>
+        </a>
+      </div>
+
+      <div class="articles-grid">
+
+        <div class="article-card featured reveal">
+          <div class="article-image">
+            <span style="font-size:4rem;">📈</span>
+            <div class="article-image-overlay"></div>
+          </div>
+          <div class="article-content">
+            <span class="article-tag">Debt Freedom</span>
+            <h3 class="article-title">How South Africans Can Escape the Debt Cycle in 5 Practical Steps</h3>
+            <p class="article-excerpt">The average South African spends 74% of their income servicing debt. Here's the systematic approach that has helped thousands break free — even on a modest salary.</p>
+            <div class="article-meta">
+              <span>Financial Education · 8 min read</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="article-card reveal reveal-delay-1">
+          <div class="article-image" style="height:160px;">
+            <span style="font-size:2.5rem;">📋</span>
+            <div class="article-image-overlay"></div>
+          </div>
+          <div class="article-content">
+            <span class="article-tag">Debt Review</span>
+            <h3 class="article-title">Understanding Debt Review: What It Means and How It Can Save You</h3>
+            <p class="article-excerpt">Debt review is not failure — it's a legal protection mechanism. Here's what it actually means for South Africans.</p>
+            <div class="article-meta">
+              <span>Legal & Financial · 6 min read</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="article-card reveal reveal-delay-2">
+          <div class="article-image" style="height:160px;">
+            <span style="font-size:2.5rem;">💡</span>
+            <div class="article-image-overlay"></div>
+          </div>
+          <div class="article-content">
+            <span class="article-tag">Wealth Building</span>
+            <h3 class="article-title">How To Start Building Wealth From a Normal South African Salary</h3>
+            <p class="article-excerpt">You don't need to earn a fortune to build one. These principles work at every income level.</p>
+            <div class="article-meta">
+              <span>Wealth Strategy · 7 min read</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="article-card reveal reveal-delay-1">
+          <div class="article-image" style="height:160px;">
+            <span style="font-size:2.5rem;">⚠️</span>
+            <div class="article-image-overlay"></div>
+          </div>
+          <div class="article-content">
+            <span class="article-tag">Money Mistakes</span>
+            <h3 class="article-title">5 Financial Mistakes Keeping Ordinary South Africans Poor</h3>
+            <p class="article-excerpt">These are not bad spending habits — they're systemic gaps nobody ever taught us to avoid.</p>
+            <div class="article-meta">
+              <span>Financial Literacy · 5 min read</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="article-card reveal reveal-delay-2">
+          <div class="article-image" style="height:160px;">
+            <span style="font-size:2.5rem;">🌱</span>
+            <div class="article-image-overlay"></div>
+          </div>
+          <div class="article-content">
+            <span class="article-tag">Income</span>
+            <h3 class="article-title">Building Multiple Income Streams on a Working-Class Budget</h3>
+            <p class="article-excerpt">Multiple income streams aren't just for the wealthy. Here's how to start with what you have right now.</p>
+            <div class="article-meta">
+              <span>Income Strategy · 9 min read</span>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </section>
+
+  <!-- ════════════════════════════════════════
+       NEWSLETTER
+  ════════════════════════════════════════ -->
+  <section class="newsletter">
+    <div class="container">
+      <div class="newsletter-inner reveal">
+        <span class="section-label" style="display:block;text-align:center;padding-left:0;">Free Financial Education</span>
+        <h2 class="section-title" style="color:var(--white);">Join Thousands Learning<br/>To Take Control Of Their Money</h2>
+        <div class="gold-divider center"></div>
+        <p class="section-subtitle">Get practical financial tips, debt recovery strategies, and wealth-building insights delivered directly to your inbox. Free. No spam. South African focused.</p>
+
+        <form class="newsletter-form" id="newsletterForm">
+          <input class="newsletter-input" type="email" placeholder="Your email address" required />
+          <button type="submit" class="newsletter-btn">Subscribe Free</button>
+        </form>
+
+        <p class="newsletter-privacy">
+          <i class="fa fa-lock" style="margin-right:4px;"></i>
+          We respect your privacy. No spam, ever. Unsubscribe anytime.
+        </p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ════════════════════════════════════════
+       CONTACT / CTA
+  ════════════════════════════════════════ -->
+  <section class="cta-final" id="contact">
+    <div class="container">
+      <div class="cta-final-inner reveal">
+        <div class="cta-eyebrow">
+          <i class="fa fa-star" style="color:var(--gold);"></i>
+          Your Transformation Starts Now
+          <i class="fa fa-star" style="color:var(--gold);"></i>
+        </div>
+
+        <h2 class="cta-headline">
+          Your Financial Future Starts<br/>
+          <em style="color:var(--gold);">With One Decision.</em>
+        </h2>
+
+        <p class="cta-subtext">
+          Thousands of South Africans have already begun their journey to financial freedom. The only difference between where you are and where you want to be is the decision to start. Make it today.
+        </p>
+
+        <div class="cta-buttons">
+          <a href="mailto:info@mlinjanafinancial.co.za" class="btn-primary">
+            <span>Begin Your Transformation</span>
+            <i class="fa fa-arrow-right"></i>
+          </a>
+          <a href="https://wa.me/27000000000?text=Hello%20Mlinjana%20Financial%20Group%2C%20I%20would%20like%20to%20book%20a%20free%20consultation."
+             target="_blank"
+             rel="noopener noreferrer"
+             class="cta-whatsapp">
+            <i class="fab fa-whatsapp" style="font-size:1.3rem;"></i>
+            Chat on WhatsApp
+          </a>
+        </div>
+
+        <!-- Contact Details -->
+        <div style="display:flex;justify-content:center;gap:3rem;flex-wrap:wrap;margin-top:3.5rem;padding-top:2.5rem;border-top:1px solid rgba(255,255,255,0.1);">
+          <div style="text-align:center;">
+            <i class="fa fa-envelope" style="color:var(--gold);font-size:1.2rem;display:block;margin-bottom:0.5rem;"></i>
+            <div style="font-size:0.8rem;color:rgba(255,255,255,0.4);text-transform:uppercase;letter-spacing:0.08em;margin-bottom:4px;">Email Us</div>
+            <a href="mailto:info@mlinjanafinancial.co.za" style="color:rgba(255,255,255,0.75);font-size:0.95rem;transition:color 0.2s;" onmouseover="this.style.color='var(--gold)'" onmouseout="this.style.color='rgba(255,255,255,0.75)'">info@mlinjanafinancial.co.za</a>
+          </div>
+          <div style="text-align:center;">
+            <i class="fa fa-phone" style="color:var(--gold);font-size:1.2rem;display:block;margin-bottom:0.5rem;"></i>
+            <div style="font-size:0.8rem;color:rgba(255,255,255,0.4);text-transform:uppercase;letter-spacing:0.08em;margin-bottom:4px;">Call Us</div>
+            <a href="tel:+27000000000" style="color:rgba(255,255,255,0.75);font-size:0.95rem;">+27 (0) 00 000 0000</a>
+          </div>
+          <div style="text-align:center;">
+            <i class="fa fa-location-dot" style="color:var(--gold);font-size:1.2rem;display:block;margin-bottom:0.5rem;"></i>
+            <div style="font-size:0.8rem;color:rgba(255,255,255,0.4);text-transform:uppercase;letter-spacing:0.08em;margin-bottom:4px;">Based In</div>
+            <span style="color:rgba(255,255,255,0.75);font-size:0.95rem;">Johannesburg, South Africa</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ════════════════════════════════════════
+       FOOTER
+  ════════════════════════════════════════ -->
+  <footer class="footer">
+    <div class="container">
+      <div class="footer-grid">
+
+        <!-- Brand -->
+        <div class="footer-brand">
+          <div class="nav-logo" style="margin-bottom:1rem;">
+            <svg class="logo-svg" viewBox="0 0 44 44" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <rect width="44" height="44" rx="4" fill="rgba(201,168,76,0.12)"/>
+              <path d="M8 34 L8 26 L16 26 L16 18 L24 18 L24 10 L36 10" stroke="#C9A84C" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+              <circle cx="36" cy="10" r="4" fill="#C9A84C"/>
+              <line x1="8" y1="34" x2="36" y2="34" stroke="rgba(201,168,76,0.35)" stroke-width="1.5" stroke-linecap="round"/>
+            </svg>
+            <div class="logo-text">
+              <span class="logo-name">Mlinjana Financial Group</span>
+              <span class="logo-tagline">Empowering South Africa's Financial Future</span>
+            </div>
+          </div>
+
+          <p class="footer-tagline">
+            We exist to educate, empower, and transform the financial lives of South Africans — helping them escape debt, rebuild their foundation, and create sustainable wealth.
+          </p>
+
+          <div class="footer-social">
+            <a href="#" class="social-link" aria-label="Facebook"><i class="fab fa-facebook-f"></i></a>
+            <a href="#" class="social-link" aria-label="Instagram"><i class="fab fa-instagram"></i></a>
+            <a href="#" class="social-link" aria-label="LinkedIn"><i class="fab fa-linkedin-in"></i></a>
+            <a href="#" class="social-link" aria-label="YouTube"><i class="fab fa-youtube"></i></a>
+            <a href="#" class="social-link" aria-label="TikTok"><i class="fab fa-tiktok"></i></a>
+          </div>
+        </div>
+
+        <!-- Services -->
+        <div>
+          <div class="footer-heading">Services</div>
+          <ul class="footer-links">
+            <li><a href="#services">Debt Freedom Program</a></li>
+            <li><a href="#services">Financial Literacy Academy</a></li>
+            <li><a href="#services">Wealth Building Blueprint</a></li>
+            <li><a href="#services">Corporate Financial Wellness</a></li>
+            <li><a href="#calculator">Free Debt Calculator</a></li>
+          </ul>
+        </div>
+
+        <!-- Company -->
+        <div>
+          <div class="footer-heading">Company</div>
+          <ul class="footer-links">
+            <li><a href="#about">Our Story</a></li>
+            <li><a href="#founder">Meet the Founder</a></li>
+            <li><a href="#journey">The Journey</a></li>
+            <li><a href="#testimonials">Client Stories</a></li>
+            <li><a href="#resources">Resources & Blog</a></li>
+            <li><a href="#contact">Contact Us</a></li>
+          </ul>
+        </div>
+
+        <!-- Contact -->
+        <div>
+          <div class="footer-heading">Get In Touch</div>
+          <div class="footer-contact-item">
+            <i class="fa fa-envelope contact-icon"></i>
+            <span class="contact-text">info@mlinjanafinancial.co.za</span>
+          </div>
+          <div class="footer-contact-item">
+            <i class="fa fa-phone contact-icon"></i>
+            <span class="contact-text">+27 (0) 00 000 0000</span>
+          </div>
+          <div class="footer-contact-item">
+            <i class="fab fa-whatsapp contact-icon"></i>
+            <span class="contact-text">WhatsApp available 08:00–18:00</span>
+          </div>
+          <div class="footer-contact-item">
+            <i class="fa fa-location-dot contact-icon"></i>
+            <span class="contact-text">Johannesburg, Gauteng<br/>South Africa</span>
+          </div>
+
+          <div style="margin-top:1.5rem;">
+            <div class="footer-heading">Book A Free Session</div>
+            <a href="#contact" class="btn-primary" style="padding:12px 22px;font-size:0.8rem;display:inline-flex;">
+              <span>Free Consultation</span>
+            </a>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Footer Bottom -->
+      <div class="footer-bottom">
+        <p class="footer-copy">
+          © 2024 Mlinjana Financial Group. All rights reserved. | Serving South Africans nationally.
+        </p>
+        <div class="footer-legal">
+          <a href="#">Privacy Policy</a>
+          <a href="#">Terms of Service</a>
+          <a href="#">Disclaimer</a>
+        </div>
+      </div>
+    </div>
+  </footer>
+
+  <!-- ════════════════════════════════════════
+       WHATSAPP FLOAT BUTTON
+  ════════════════════════════════════════ -->
+  <a href="https://wa.me/27000000000?text=Hello%20Mlinjana%20Financial%20Group%2C%20I%20would%20like%20to%20know%20more%20about%20your%20services."
+     target="_blank"
+     rel="noopener noreferrer"
+     class="whatsapp-float"
+     aria-label="Chat on WhatsApp"
+     title="Chat with us on WhatsApp">
+    <i class="fab fa-whatsapp"></i>
+  </a>
+
+  <!-- Scripts -->
+  <script src="assets/js/main.js"></script>
+
+</body>
+</html>
