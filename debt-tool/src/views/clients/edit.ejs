@@ -1,0 +1,87 @@
+<%- include('../partials/header') %>
+
+<div class="page-head">
+  <div>
+    <h1>Edit <%= client.first_name %> <%= client.last_name %></h1>
+    <p class="sub"><span class="mono"><%= client.reference %></span> · ID •••• <%= client.id_number_last4 %></p>
+  </div>
+</div>
+
+<div class="card" style="max-width:760px;">
+  <div class="card-body">
+    <% if (error) { %><div class="notice notice-error"><%= error %></div><% } %>
+
+    <form method="post" action="/clients/<%= client.id %>/edit">
+      <input type="hidden" name="_csrf" value="<%= csrfToken %>" />
+
+      <div class="field-row">
+        <div class="field">
+          <label for="firstName">First name</label>
+          <input type="text" id="firstName" name="firstName" required value="<%= client.first_name %>" />
+        </div>
+        <div class="field">
+          <label for="lastName">Surname</label>
+          <input type="text" id="lastName" name="lastName" required value="<%= client.last_name %>" />
+        </div>
+      </div>
+
+      <div class="field-row">
+        <div class="field">
+          <label for="phone">Phone</label>
+          <input type="text" id="phone" name="phone" value="<%= client.phone || '' %>" />
+        </div>
+        <div class="field">
+          <label for="email">Email</label>
+          <input type="email" id="email" name="email" value="<%= client.email || '' %>" />
+        </div>
+      </div>
+
+      <div class="field-row">
+        <div class="field">
+          <label for="employmentStatus">Employment</label>
+          <select id="employmentStatus" name="employmentStatus">
+            <% ['', 'permanent', 'contract', 'self_employed', 'pensioner', 'unemployed'].forEach((v) => { %>
+              <option value="<%= v %>" <%= client.employment_status === v ? 'selected' : '' %>>
+                <%= v ? v.replace(/_/g, ' ') : 'Not stated' %>
+              </option>
+            <% }) %>
+          </select>
+        </div>
+        <div class="field">
+          <label for="maritalStatus">Marital status</label>
+          <select id="maritalStatus" name="maritalStatus">
+            <% ['', 'single', 'married_cop', 'married_anc', 'divorced', 'widowed'].forEach((v) => { %>
+              <option value="<%= v %>" <%= client.marital_status === v ? 'selected' : '' %>>
+                <%= v ? v.replace(/_/g, ' ') : 'Not stated' %>
+              </option>
+            <% }) %>
+          </select>
+        </div>
+        <div class="field">
+          <label for="dependants">Dependants</label>
+          <input type="number" id="dependants" name="dependants" min="0" max="20" value="<%= client.dependants %>" />
+        </div>
+        <div class="field">
+          <label for="status">File status</label>
+          <select id="status" name="status">
+            <% ['active', 'under_review', 'closed'].forEach((v) => { %>
+              <option value="<%= v %>" <%= client.status === v ? 'selected' : '' %>><%= v.replace(/_/g, ' ') %></option>
+            <% }) %>
+          </select>
+        </div>
+      </div>
+
+      <div class="field">
+        <label for="notes">File notes</label>
+        <textarea id="notes" name="notes"><%= client.notes || '' %></textarea>
+      </div>
+
+      <div class="btn-row">
+        <button type="submit" class="btn btn-gold">Save changes</button>
+        <a href="/clients/<%= client.id %>" class="btn btn-ghost">Cancel</a>
+      </div>
+    </form>
+  </div>
+</div>
+
+<%- include('../partials/footer') %>

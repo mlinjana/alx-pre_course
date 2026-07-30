@@ -1,0 +1,83 @@
+<%- include('../partials/header') %>
+
+<div class="page-head">
+  <div>
+    <h1>Audit log</h1>
+    <p class="sub"><%= total %> entries — who accessed which client file, and when</p>
+  </div>
+</div>
+
+<div class="card">
+  <div class="card-body">
+    <form method="get" action="/admin/audit" class="searchbar">
+      <div class="field" style="flex:0 0 200px;">
+        <label for="entityType">Entity type</label>
+        <select id="entityType" name="entityType">
+          <option value="">All</option>
+          <option value="client" <%= filters.entityType === 'client' ? 'selected' : '' %>>Client</option>
+          <option value="user" <%= filters.entityType === 'user' ? 'selected' : '' %>>User</option>
+        </select>
+      </div>
+      <div class="field" style="flex:0 0 160px;">
+        <label for="entityId">Entity ID</label>
+        <input type="text" id="entityId" name="entityId" value="<%= filters.entityId %>" />
+      </div>
+      <button type="submit" class="btn">Filter</button>
+      <% if (filters.entityType || filters.entityId) { %>
+        <a href="/admin/audit" class="btn btn-ghost">Clear</a>
+      <% } %>
+    </form>
+  </div>
+</div>
+
+<div class="card">
+  <div class="card-body tight">
+    <% if (entries.length === 0) { %>
+      <div class="empty"><h3>No entries</h3></div>
+    <% } else { %>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr><th>When</th><th>Who</th><th>Action</th><th>Entity</th><th>Detail</th><th>IP</th></tr>
+          </thead>
+          <tbody>
+            <% entries.forEach((e) => { %>
+              <tr>
+                <td class="small nowrap"><%= formatDate(e.created_at, { withTime: true }) %></td>
+                <td class="small"><%= e.actor_email || 'anonymous' %></td>
+                <td class="small"><span class="badge"><%= e.action %></span></td>
+                <td class="small">
+                  <% if (e.entity_type === 'client' && e.entity_id) { %>
+                    <a href="/clients/<%= e.entity_id %>">client #<%= e.entity_id %></a>
+                  <% } else if (e.entity_type) { %>
+                    <%= e.entity_type %><%= e.entity_id ? ' #' + e.entity_id : '' %>
+                  <% } else { %>—<% } %>
+                </td>
+                <td class="mono small muted" style="max-width:340px;word-break:break-word;">
+                  <%= e.detail_json || '—' %>
+                </td>
+                <td class="mono small muted"><%= e.ip || '—' %></td>
+              </tr>
+            <% }) %>
+          </tbody>
+        </table>
+      </div>
+    <% } %>
+  </div>
+</div>
+
+<% if (pageCount > 1) { %>
+  <div class="pagination">
+    <% const qs = (p) => `/admin/audit?page=${p}&entityType=${encodeURIComponent(filters.entityType)}&entityId=${encodeURIComponent(filters.entityId)}`; %>
+    <% if (page > 1) { %><a href="<%= qs(page - 1) %>" class="btn btn-sm btn-ghost">Previous</a><% } %>
+    <span class="muted small">Page <%= page %> of <%= pageCount %></span>
+    <% if (page < pageCount) { %><a href="<%= qs(page + 1) %>" class="btn btn-sm btn-ghost">Next</a><% } %>
+  </div>
+<% } %>
+
+<p class="footnote">
+  This log is append-only. Nothing in the application edits or deletes these rows —
+  it is the record the practice relies on to show how client information has been used.
+</p>
+
+<%- include('../partials/footer') %>

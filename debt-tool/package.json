@@ -1,0 +1,33 @@
+{
+  "name": "mfg-debt-tool",
+  "version": "1.0.0",
+  "description": "Mlinjana Financial Group — client debt profile tool. Pulls credit bureau data and shows what a client owes.",
+  "type": "module",
+  "main": "src/server.js",
+  "engines": {
+    "node": ">=22.5.0"
+  },
+  "scripts": {
+    "start": "node src/server.js",
+    "dev": "node --watch src/server.js",
+    "migrate": "node src/db/migrate.js",
+    "seed": "node src/db/seed.js",
+    "test": "node --test \"test/**/*.test.js\""
+  },
+  "keywords": [
+    "debt-review",
+    "credit-bureau",
+    "nca",
+    "south-africa"
+  ],
+  "license": "UNLICENSED",
+  "private": true,
+  "dependencies": {
+    "dotenv": "^17.4.2",
+    "ejs": "^6.0.1",
+    "express": "^5.2.1",
+    "multer": "^2.2.0",
+    "pdf-parse": "^2.4.5",
+    "zod": "^4.4.3"
+  }
+}

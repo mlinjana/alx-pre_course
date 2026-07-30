@@ -1,0 +1,14 @@
+<%- include('partials/header') %>
+
+<div class="card" style="max-width:620px;margin:3rem auto;">
+  <div class="card-body" style="text-align:center;padding:2.5rem;">
+    <div style="font-family:var(--font-serif);font-size:3rem;color:var(--gold);line-height:1;"><%= status %></div>
+    <h1 style="margin:0.75rem 0 0.5rem;"><%= title %></h1>
+    <p class="muted"><%= message %></p>
+    <div class="btn-row" style="justify-content:center;margin-top:1.5rem;">
+      <a href="/clients" class="btn btn-ghost">Back to clients</a>
+    </div>
+  </div>
+</div>
+
+<%- include('partials/footer') %>

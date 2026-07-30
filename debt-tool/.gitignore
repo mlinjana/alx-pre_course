@@ -1,0 +1,17 @@
+node_modules/
+
+# Real configuration and, critically, the encryption secret.
+.env
+.env.local
+.env.*.local
+
+# The database holds client ID numbers and credit records. It must never
+# reach the repository — back it up separately and encrypted.
+data/
+*.db
+*.db-wal
+*.db-shm
+*.sqlite
+
+npm-debug.log*
+.DS_Store

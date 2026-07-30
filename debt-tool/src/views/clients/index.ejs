@@ -1,0 +1,104 @@
+<%- include('../partials/header') %>
+
+<div class="page-head">
+  <div>
+    <h1>Clients</h1>
+    <p class="sub"><%= total %> client<%= total === 1 ? '' : 's' %> on file</p>
+  </div>
+  <div class="spacer"></div>
+  <% if (currentUser.role !== 'readonly') { %>
+    <a href="/clients/new" class="btn btn-gold">Add client</a>
+  <% } %>
+</div>
+
+<div class="card">
+  <div class="card-body">
+    <form method="get" action="/clients" class="searchbar">
+      <div class="field" style="flex:1 1 320px;">
+        <label for="q">Search</label>
+        <input type="search" id="q" name="q" value="<%= query %>"
+               placeholder="Name, file reference, email, or full 13-digit ID number" />
+      </div>
+      <div class="field" style="flex:0 0 170px;">
+        <label for="status">Status</label>
+        <select id="status" name="status">
+          <option value="">All</option>
+          <option value="active" <%= status === 'active' ? 'selected' : '' %>>Active</option>
+          <option value="under_review" <%= status === 'under_review' ? 'selected' : '' %>>Under review</option>
+          <option value="closed" <%= status === 'closed' ? 'selected' : '' %>>Closed</option>
+        </select>
+      </div>
+      <button type="submit" class="btn">Search</button>
+      <% if (query || status) { %><a href="/clients" class="btn btn-ghost">Clear</a><% } %>
+    </form>
+  </div>
+</div>
+
+<div class="card">
+  <div class="card-body tight">
+    <% if (clients.length === 0) { %>
+      <div class="empty">
+        <h3>No clients found</h3>
+        <p><%= query || status ? 'Try a different search.' : 'Add your first client to get started.' %></p>
+      </div>
+    <% } else { %>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>File</th>
+              <th>Client</th>
+              <th>ID</th>
+              <th>Contact</th>
+              <th class="num">Total owed</th>
+              <th>Last bureau pull</th>
+              <th>Status</th>
+            </tr>
+          </thead>
+          <tbody>
+            <% clients.forEach((c) => { %>
+              <tr>
+                <td class="mono"><a href="/clients/<%= c.id %>"><%= c.reference %></a></td>
+                <td><strong><%= c.first_name %> <%= c.last_name %></strong></td>
+                <td class="mono muted">•••• <%= c.id_number_last4 %></td>
+                <td class="small muted">
+                  <%= c.phone || '—' %><% if (c.email) { %><br /><%= c.email %><% } %>
+                </td>
+                <td class="num">
+                  <% if (c.last_pull_at) { %>
+                    <strong><%= money(c.total_owed_cents, { compact: true }) %></strong>
+                  <% } else { %>
+                    <span class="muted">—</span>
+                  <% } %>
+                </td>
+                <td class="small">
+                  <% if (c.last_pull_at) { %>
+                    <%= formatDate(c.last_pull_at, { withTime: true }) %>
+                  <% } else { %>
+                    <span class="badge warning">Never pulled</span>
+                  <% } %>
+                </td>
+                <td>
+                  <span class="badge <%= c.status === 'active' ? 'success' : c.status === 'under_review' ? 'warning' : '' %>">
+                    <%= c.status.replace('_', ' ') %>
+                  </span>
+                </td>
+              </tr>
+            <% }) %>
+          </tbody>
+        </table>
+      </div>
+    <% } %>
+  </div>
+</div>
+
+<% if (pageCount > 1) { %>
+  <div class="pagination">
+    <% const qs = (p) => `/clients?page=${p}&q=${encodeURIComponent(query)}&status=${encodeURIComponent(status)}`; %>
+    <% if (page > 1) { %><a href="<%= qs(page - 1) %>" class="btn btn-sm btn-ghost">Previous</a><% } %>
+    <span class="muted small">Page <%= page %> of <%= pageCount %></span>
+    <% if (page < pageCount) { %><a href="<%= qs(page + 1) %>" class="btn btn-sm btn-ghost">Next</a><% } %>
+  </div>
+<% } %>
+
+<%- include('../partials/footer') %>

@@ -1,0 +1,137 @@
+<%- include('../partials/header') %>
+
+<div class="page-head">
+  <div>
+    <h1>Import a bureau report</h1>
+    <p class="sub">
+      <%= client.first_name %> <%= client.last_name %> ·
+      <span class="mono"><%= client.reference %></span>
+    </p>
+  </div>
+  <div class="spacer"></div>
+  <a href="/clients/<%= client.id %>" class="btn btn-ghost btn-sm">Back to file</a>
+</div>
+
+<% if (error) { %><div class="notice notice-warn"><%= error %></div><% } %>
+
+<% if (!parsed) { %>
+  <div class="card" style="max-width:680px;">
+    <div class="card-body">
+      <p style="margin-bottom:1.1rem;">
+        Every South African may request one free credit report a year from each bureau.
+        If the client has downloaded theirs, upload the PDF here and the tool will read the
+        accounts out of it — no bureau enquiry fee, and no new search on their credit record.
+      </p>
+
+      <form method="post" action="/clients/<%= client.id %>/import" enctype="multipart/form-data">
+        <input type="hidden" name="_csrf" value="<%= csrfToken %>" />
+        <div class="field">
+          <label for="report">Bureau report (PDF)</label>
+          <input type="file" id="report" name="report" accept="application/pdf,.pdf" required />
+          <p class="hint">The file is read in memory and is not stored. Only the accounts you confirm are saved.</p>
+        </div>
+        <button type="submit" class="btn btn-gold">Read report</button>
+      </form>
+
+      <p class="footnote">
+        Reading a PDF layout is not exact. Everything found is shown for you to check and correct
+        before anything is saved to the client's file.
+      </p>
+    </div>
+  </div>
+<% } else { %>
+  <div class="notice notice-info">
+    Read <strong><%= parsed.accountCount %></strong> possible account<%= parsed.accountCount === 1 ? '' : 's' %>
+    from a <%= parsed.pageCount %>-page report
+    <% if (parsed.bureau !== 'unknown') { %> that appears to be from <strong><%= parsed.bureau %></strong><% } %>.
+    <strong>Nothing has been saved yet.</strong> Check each row, untick anything wrong, then confirm.
+  </div>
+
+  <form method="post" action="/clients/<%= client.id %>/import/confirm">
+    <input type="hidden" name="_csrf" value="<%= csrfToken %>" />
+    <input type="hidden" name="bureau" value="<%= parsed.bureau %>" />
+
+    <div class="card">
+      <div class="card-head">
+        <h2>Check what was read</h2>
+        <span class="spacer"></span>
+        <span class="muted small">Low-confidence rows are flagged — check those first</span>
+      </div>
+      <div class="card-body tight">
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Keep</th>
+                <th>Creditor</th>
+                <th>Type</th>
+                <th>Account no.</th>
+                <th>Opened</th>
+                <th class="num">Balance</th>
+                <th class="num">Instalment</th>
+                <th class="num">Arrears</th>
+                <th class="num">Mo.</th>
+                <th>Status</th>
+                <th>Read</th>
+              </tr>
+            </thead>
+            <tbody>
+              <% parsed.accounts.forEach((row, i) => {
+                   const a = row.account;
+                   const low = row.confidence < 0.6; %>
+                <tr>
+                  <td><input type="checkbox" name="include" value="<%= i %>" <%= low ? '' : 'checked' %> /></td>
+                  <td><input type="text" name="creditorName" value="<%= a.creditorName %>" style="min-width:150px" /></td>
+                  <td>
+                    <select name="accountType" style="min-width:130px">
+                      <% Object.entries(accountTypes).forEach(([key, meta]) => { %>
+                        <option value="<%= key %>" <%= a.accountType === key ? 'selected' : '' %>><%= meta.label %></option>
+                      <% }) %>
+                    </select>
+                  </td>
+                  <td><input type="text" name="accountNumber" value="<%= a.accountNumber || '' %>" style="min-width:110px" /></td>
+                  <td><input type="date" name="openedDate" value="<%= a.openedDate || '' %>" /></td>
+                  <td><input type="text" name="balance" class="right" inputmode="decimal"
+                             value="<%= (a.currentBalanceCents / 100).toFixed(2) %>" style="min-width:100px" /></td>
+                  <td><input type="text" name="instalment" class="right" inputmode="decimal"
+                             value="<%= (a.monthlyInstalmentCents / 100).toFixed(2) %>" style="min-width:100px" /></td>
+                  <td><input type="text" name="arrears" class="right" inputmode="decimal"
+                             value="<%= (a.arrearsAmountCents / 100).toFixed(2) %>" style="min-width:100px" /></td>
+                  <td><input type="number" name="monthsInArrears" min="0" max="99"
+                             value="<%= a.monthsInArrears %>" style="width:60px" /></td>
+                  <td>
+                    <select name="status" style="min-width:110px">
+                      <% ['open', 'closed', 'written_off', 'legal', 'under_debt_review', 'unknown'].forEach((s) => { %>
+                        <option value="<%= s %>" <%= a.status === s ? 'selected' : '' %>><%= s.replace(/_/g, ' ') %></option>
+                      <% }) %>
+                    </select>
+                  </td>
+                  <td>
+                    <span class="badge <%= low ? 'warning' : 'success' %>"><%= Math.round(row.confidence * 100) %>%</span>
+                    <details>
+                      <summary class="small muted" style="cursor:pointer">source</summary>
+                      <div class="mono small muted" style="max-width:300px;word-break:break-word;padding-top:0.3rem;">
+                        <%= row.sourceLine %>
+                      </div>
+                    </details>
+                  </td>
+                </tr>
+              <% }) %>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <div class="btn-row">
+      <button type="submit" class="btn btn-gold">Save confirmed accounts to the file</button>
+      <a href="/clients/<%= client.id %>/import" class="btn btn-ghost">Start over</a>
+    </div>
+    <p class="footnote">
+      Confirmed accounts are saved as a new dated snapshot on the client's file, marked as coming from
+      an imported report rather than a live bureau enquiry.
+    </p>
+  </form>
+<% } %>
+
+<%- include('../partials/footer') %>
