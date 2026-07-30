@@ -1,0 +1,71 @@
+<%- include('../partials/header') %>
+
+<div class="page-head">
+  <div>
+    <h1>Settings</h1>
+    <p class="sub">Read-only view of how this instance is configured. Change these through environment variables and restart.</p>
+  </div>
+</div>
+
+<div class="card">
+  <div class="card-head"><h2>Credit bureaus</h2></div>
+  <div class="card-body tight">
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr><th>Bureau</th><th>Status</th><th>What is needed</th></tr>
+        </thead>
+        <tbody>
+          <% providers.forEach((p) => { %>
+            <tr>
+              <td>
+                <strong><%= p.label %></strong>
+                <% if (p.id === defaultProvider) { %><span class="badge navy">default</span><% } %>
+                <% if (p.isSimulated) { %><span class="badge simulated">simulated</span><% } %>
+              </td>
+              <td>
+                <span class="badge <%= p.configured ? 'success' : 'warning' %>">
+                  <%= p.configured ? 'ready' : 'not configured' %>
+                </span>
+              </td>
+              <td class="small muted"><%= p.hint %></td>
+            </tr>
+          <% }) %>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<div class="card" style="max-width:640px;">
+  <div class="card-head"><h2>This instance</h2></div>
+  <div class="card-body">
+    <dl class="dl">
+      <dt>Environment</dt><dd><%= config.env %></dd>
+      <dt>Database</dt><dd class="mono small"><%= config.databaseFile %></dd>
+      <dt>Session length</dt><dd><%= config.sessionTtlHours %> hours</dd>
+      <dt>Profile considered stale after</dt><dd><%= config.snapshotStaleDays %> days</dd>
+      <dt>Secure cookies</dt>
+      <dd>
+        <span class="badge <%= config.cookieSecure ? 'success' : 'warning' %>">
+          <%= config.cookieSecure ? 'on' : 'off' %>
+        </span>
+      </dd>
+      <dt>Simulated bureau</dt>
+      <dd>
+        <span class="badge <%= config.allowMock ? 'warning' : 'success' %>">
+          <%= config.allowMock ? 'enabled' : 'disabled' %>
+        </span>
+      </dd>
+    </dl>
+
+    <% if (config.allowMock && config.env === 'production') { %>
+      <div class="notice notice-error" style="margin-top:1.1rem;">
+        The simulated bureau is enabled in production. Set <code>BUREAU_ALLOW_MOCK=false</code> so
+        fictional figures can never be mistaken for a real credit profile.
+      </div>
+    <% } %>
+  </div>
+</div>
+
+<%- include('../partials/footer') %>

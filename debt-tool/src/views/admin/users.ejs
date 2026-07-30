@@ -1,0 +1,83 @@
+<%- include('../partials/header') %>
+
+<div class="page-head">
+  <div>
+    <h1>Staff users</h1>
+    <p class="sub">Who can sign in, and what they may do</p>
+  </div>
+</div>
+
+<% if (created) { %>
+  <div class="notice notice-ok">
+    Account created for <strong><%= created %></strong>. Give them the initial password in person or over
+    the phone — never by email — and they will be asked to change it when they first sign in.
+  </div>
+<% } %>
+<% if (error) { %><div class="notice notice-error"><%= error %></div><% } %>
+
+<div class="card">
+  <div class="card-body tight">
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr><th>Name</th><th>Email</th><th>Role</th><th>Last signed in</th><th>Status</th></tr>
+        </thead>
+        <tbody>
+          <% users.forEach((u) => { %>
+            <tr>
+              <td><strong><%= u.full_name %></strong></td>
+              <td class="small"><%= u.email %></td>
+              <td><span class="badge <%= u.role === 'admin' ? 'navy' : '' %>"><%= roles[u.role].label %></span></td>
+              <td class="small muted"><%= u.last_login_at ? formatDate(u.last_login_at, { withTime: true }) : 'never' %></td>
+              <td>
+                <span class="badge <%= u.is_active ? 'success' : 'danger' %>">
+                  <%= u.is_active ? 'active' : 'disabled' %>
+                </span>
+              </td>
+            </tr>
+          <% }) %>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<div class="card" style="max-width:640px;">
+  <div class="card-head"><h2>Add a staff user</h2></div>
+  <div class="card-body">
+    <form method="post" action="/admin/users">
+      <input type="hidden" name="_csrf" value="<%= csrfToken %>" />
+
+      <div class="field-row">
+        <div class="field">
+          <label for="fullName">Full name</label>
+          <input type="text" id="fullName" name="fullName" required />
+        </div>
+        <div class="field">
+          <label for="email">Work email</label>
+          <input type="email" id="email" name="email" required />
+        </div>
+      </div>
+
+      <div class="field-row">
+        <div class="field">
+          <label for="role">Role</label>
+          <select id="role" name="role">
+            <option value="consultant">Debt consultant — can pull profiles and edit files</option>
+            <option value="readonly">Read only — can view files but change nothing</option>
+            <option value="admin">Administrator — full access including this page</option>
+          </select>
+        </div>
+        <div class="field">
+          <label for="password">Initial password</label>
+          <input type="password" id="password" name="password" required minlength="12" autocomplete="new-password" />
+          <p class="hint">At least 12 characters. They must change it on first sign-in.</p>
+        </div>
+      </div>
+
+      <button type="submit" class="btn btn-gold">Create account</button>
+    </form>
+  </div>
+</div>
+
+<%- include('../partials/footer') %>

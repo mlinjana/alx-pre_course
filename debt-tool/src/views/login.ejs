@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en-ZA">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="robots" content="noindex, nofollow" />
+  <title><%= title %> · Mlinjana Debt Tool</title>
+  <link rel="stylesheet" href="/static/app.css" />
+</head>
+<body>
+<div class="login-shell">
+  <div class="login-card">
+    <div class="login-rule"></div>
+    <h1>Mlinjana Financial Group</h1>
+    <p class="lead">Client Debt Tool — staff access only.</p>
+
+    <% if (error) { %>
+      <div class="notice notice-error"><%= error %></div>
+    <% } %>
+
+    <form method="post" action="/login" autocomplete="on">
+      <input type="hidden" name="_csrf" value="<%= csrfToken %>" />
+      <input type="hidden" name="next" value="<%= next %>" />
+
+      <div class="field">
+        <label for="email">Work email</label>
+        <input type="email" id="email" name="email" value="<%= email %>" required autofocus autocomplete="username" />
+      </div>
+
+      <div class="field">
+        <label for="password">Password</label>
+        <input type="password" id="password" name="password" required autocomplete="current-password" />
+      </div>
+
+      <button type="submit" class="btn btn-gold" style="width:100%">Sign in</button>
+    </form>
+
+    <p class="footnote">
+      This system holds client credit information. Access is logged against your name,
+      and the records here may only be used for the purpose the client consented to.
+    </p>
+  </div>
+</div>
+</body>
+</html>

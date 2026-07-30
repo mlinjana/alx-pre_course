@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="en-ZA">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="robots" content="noindex, nofollow" />
+  <title><%= title %> · Mlinjana Debt Tool</title>
+  <link rel="stylesheet" href="/static/app.css" />
+</head>
+<body>
+
+<% if (env !== 'production') { %>
+  <div class="env-banner">
+    Non-production environment (<%= env %>) — figures shown here may come from the simulated bureau.
+  </div>
+<% } %>
+
+<header class="topbar">
+  <div class="topbar-inner">
+    <a href="<%= currentUser ? '/clients' : '/login' %>" class="brand">
+      <svg class="brand-mark" viewBox="0 0 44 44" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+        <rect width="44" height="44" rx="4" fill="rgba(201,168,76,0.12)"/>
+        <path d="M8 34 L8 26 L16 26 L16 18 L24 18 L24 10 L36 10" stroke="#C9A84C" stroke-width="2.5"
+              stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+        <circle cx="36" cy="10" r="4" fill="#C9A84C"/>
+        <line x1="8" y1="34" x2="36" y2="34" stroke="rgba(201,168,76,0.35)" stroke-width="1.5" stroke-linecap="round"/>
+      </svg>
+      <span>
+        <span class="brand-name">Mlinjana Financial</span>
+        <span class="brand-sub">Client Debt Tool</span>
+      </span>
+    </a>
+
+    <% if (currentUser) { %>
+      <nav class="topnav">
+        <a href="/clients" class="<%= currentPath.startsWith('/clients') ? 'active' : '' %>">Clients</a>
+        <% if (currentUser.role === 'admin') { %>
+          <a href="/admin/audit" class="<%= currentPath.startsWith('/admin/audit') ? 'active' : '' %>">Audit</a>
+          <a href="/admin/users" class="<%= currentPath.startsWith('/admin/users') ? 'active' : '' %>">Staff</a>
+          <a href="/admin/settings" class="<%= currentPath.startsWith('/admin/settings') ? 'active' : '' %>">Settings</a>
+        <% } %>
+        <span class="who"><%= currentUser.full_name %></span>
+        <a href="/account/password">Password</a>
+        <form method="post" action="/logout" style="display:inline">
+          <input type="hidden" name="_csrf" value="<%= csrfToken %>" />
+          <button type="submit" class="btn btn-sm btn-ghost">Sign out</button>
+        </form>
+      </nav>
+    <% } %>
+  </div>
+</header>
+
+<main class="page">
