@@ -1,11 +1,15 @@
 import { createApp } from './app.js';
 import { config, assertProductionConfig } from './config.js';
 import { purgeExpiredSessions } from './services/users.js';
+import { ensureBootstrapAdmin } from './db/bootstrap.js';
 import { getDb, closeDb } from './db/index.js';
 
 assertProductionConfig();
 
 const app = createApp();
+// Only does anything on a database with no users, so a hosted instance can be
+// signed into without shell access on its first boot.
+ensureBootstrapAdmin(getDb());
 purgeExpiredSessions(getDb());
 
 const server = app.listen(config.port, () => {

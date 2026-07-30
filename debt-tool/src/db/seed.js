@@ -1,7 +1,7 @@
 #!/usr/bin/env node
-import crypto from 'node:crypto';
 import { getDb, closeDb } from './index.js';
-import { createUser, getUserByEmail } from '../services/users.js';
+import { ensureBootstrapAdmin } from './bootstrap.js';
+import { getUserByEmail } from '../services/users.js';
 import { createClient, findClientByIdNumber } from '../services/clients.js';
 import { recordConsent } from '../services/consent.js';
 import { runBureauEnquiry } from '../services/snapshots.js';
@@ -17,26 +17,15 @@ import { config } from '../config.js';
 const db = getDb();
 
 const adminEmail = process.env.SEED_ADMIN_EMAIL || 'admin@mlinjana.co.za';
-let admin = getUserByEmail(adminEmail, db);
 
-if (admin) {
-  console.log(`Administrator ${adminEmail} already exists — leaving it alone.`);
-} else {
-  // A generated password is safer than a documented default: a shipped
-  // "changeme" survives into production far more often than anyone expects.
-  const password = process.env.SEED_ADMIN_PASSWORD || crypto.randomBytes(12).toString('base64url');
-  admin = createUser({
-    email: adminEmail,
-    fullName: process.env.SEED_ADMIN_NAME || 'MFG Administrator',
-    role: 'admin',
-    password,
-    mustReset: !process.env.SEED_ADMIN_PASSWORD,
-  }, db);
-
-  console.log('\n  Administrator created');
-  console.log(`    Email:    ${adminEmail}`);
-  console.log(`    Password: ${password}`);
-  console.log('    Change this on first sign-in.\n');
+// Same routine the server runs on first boot, so there is one definition of
+// "how the first administrator gets created" rather than two that can drift.
+let admin = ensureBootstrapAdmin(db);
+if (!admin) {
+  console.log('Staff accounts already exist — leaving them alone.');
+  // May still be null if the existing accounts use a different address; the
+  // demo data below only needs somebody to attribute the records to.
+  admin = getUserByEmail(adminEmail, db) ?? db.prepare('SELECT * FROM users ORDER BY id LIMIT 1').get() ?? null;
 }
 
 if (config.env !== 'production' && config.bureau.allowMock) {
@@ -67,14 +56,14 @@ async function seedDemoClient() {
     maritalStatus: 'single',
     dependants: 2,
     notes: 'Demonstration file. All figures on this client are simulated.',
-  }, { actorId: admin.id }, db);
+  }, { actorId: admin?.id ?? null }, db);
 
   recordConsent({
     clientId: client.id,
     consentType: 'bureau_enquiry',
     method: 'written',
     evidenceRef: 'Demonstration file — no real mandate exists',
-    capturedBy: admin.id,
+    capturedBy: admin?.id ?? null,
   }, db);
 
   db.prepare(`
@@ -90,7 +79,7 @@ async function seedDemoClient() {
       housing: 750000, utilities: 180000, groceries: 420000,
       transport: 260000, education: 150000, medical: 130000, communication: 60000,
     }),
-    admin.id,
+    admin?.id ?? null,
   );
 
   await runBureauEnquiry({ client, providerId: 'mock', actor: admin }, db);

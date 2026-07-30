@@ -1,0 +1,55 @@
+# Render blueprint for the Mlinjana Financial Group client debt tool.
+#
+# This deploys a DEMONSTRATION instance: the simulated bureau stays on so the
+# tool is usable before any bureau contract exists, and every page carries a
+# non-production banner. See debt-tool/DEPLOY.md for the changes that turn it
+# into a real one — that switch is deliberate, not a default.
+
+services:
+  - type: web
+    name: mfg-debt-tool
+    runtime: docker
+    plan: starter          # A persistent disk is not available on the free plan.
+    region: frankfurt      # Closest Render region to South Africa.
+    rootDir: debt-tool
+    dockerfilePath: ./Dockerfile
+    healthCheckPath: /login
+    autoDeploy: false      # Deploys happen when you choose, not on every push.
+
+    # The database is a single SQLite file. Without this disk it is wiped on
+    # every restart and redeploy, taking every client record with it.
+    disk:
+      name: mfg-data
+      mountPath: /data
+      sizeGB: 1
+
+    envVars:
+      # Generated once by Render and then held steady. It signs sessions and
+      # derives the key that encrypts ID numbers — if it ever changes, every
+      # stored ID number becomes unreadable.
+      - key: APP_SECRET
+        generateValue: true
+
+      # 'staging' keeps the non-production banner visible, so nobody mistakes
+      # simulated figures for a real credit profile.
+      - key: NODE_ENV
+        value: staging
+
+      - key: DATABASE_FILE
+        value: /data/mfg-debt-tool.db
+
+      # Render terminates TLS, so session cookies can and must be HTTPS-only.
+      - key: COOKIE_SECURE
+        value: "true"
+
+      - key: BUREAU_DEFAULT
+        value: mock
+      - key: BUREAU_ALLOW_MOCK
+        value: "true"
+
+      - key: SEED_ADMIN_EMAIL
+        value: admin@mlinjana.co.za
+
+      # Left unset on purpose: the app generates a password on first boot and
+      # prints it to the deploy log, then forces a change at first sign-in.
+      # - key: SEED_ADMIN_PASSWORD
