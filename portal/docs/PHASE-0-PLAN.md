@@ -44,7 +44,7 @@ Items I have **not yet checked** in the docs, and will check at the start of the
 
 ## 4. Database (draft)
 
-Full SQL: `supabase/migrations/0001_schema_draft.sql`. Access rules: `docs/RLS-PLAN.md`.
+Full SQL: `supabase/migrations/20260928000000_initial_schema.sql`. Access rules: `docs/RLS-PLAN.md`.
 
 The tables follow §11.3, with these changes:
 - **`clients` is split from `profiles`**, to keep profiles generic for the Academy.

@@ -1,0 +1,37 @@
+{
+  "name": "mfg-portal",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "eslint",
+    "test": "vitest run",
+    "test:db": "bash supabase/tests/run-local.sh",
+    "typecheck": "tsc --noEmit",
+    "test:integration": "vitest run --config vitest.integration.config.mts",
+    "test:e2e": "node tests/e2e/phase1.e2e.mjs"
+  },
+  "dependencies": {
+    "@supabase/ssr": "^0.12.7",
+    "@supabase/supabase-js": "^2.117.2",
+    "next": "16.3.6",
+    "react": "19.2.8",
+    "react-dom": "19.2.8",
+    "resend": "^6.30.0",
+    "server-only": "^0.0.1"
+  },
+  "devDependencies": {
+    "@tailwindcss/postcss": "^4",
+    "@types/node": "^22.20.4",
+    "@types/react": "^19",
+    "@types/react-dom": "^19",
+    "eslint": "^9",
+    "eslint-config-next": "16.3.6",
+    "playwright-core": "^1.63.0",
+    "tailwindcss": "^4",
+    "typescript": "^5",
+    "vitest": "^5.0.2"
+  }
+}

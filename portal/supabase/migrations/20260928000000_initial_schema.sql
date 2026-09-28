@@ -639,6 +639,16 @@ begin
   values (auth.uid(), 'view', p_client, jsonb_build_object('what', p_what));
 end $$;
 
+-- An applicant may see the status of their own application, nothing else
+-- (the table itself stays owner-read-only).
+create or replace function public.my_application_status()
+returns text language sql stable security definer set search_path = '' as $$
+  select status from public.coach_applications
+   where applicant_id = auth.uid() order by created_at desc limit 1
+$$;
+
+revoke execute on function public.my_application_status() from public, anon;
+grant execute on function public.my_application_status() to authenticated;
 revoke execute on function public.assign_client(uuid, uuid) from public, anon;
 revoke execute on function public.confirm_other_name(uuid) from public, anon;
 revoke execute on function public.log_view(uuid, text) from public, anon;
@@ -722,6 +732,7 @@ end $$;
 insert into public.settings (key, value, public_read) values
   ('momentum_weights', '{"reduced":40,"closed":20,"updates":25,"no_new_credit":15,"reduced_full_at_pct":50}', false),
   ('crisis_helplines', '{"verified":false,"lines":[],"note":"[VERIFIED SOUTH AFRICAN HELPLINE NUMBERS TO BE PROVIDED BY CHUMA — not a launch blocker, decision 28 Sep 2026]"}', true),
-  ('email_declined_coach', '{"text":"[CHUMA TO PROVIDE]"}', false),
-  ('email_client_assigned', '{"text":"[CHUMA TO PROVIDE]"}', false),
+  ('email_client_assigned', '{"status": "draft - Chuma to approve", "subject": "Your MFG coach is {coach_name}", "text": "Hi {first_name},\n\nGood news: you''ve been matched with your MFG coach, {coach_name}. They will contact you on WhatsApp to book your first call.\n\nBefore that call, fill in your Debt Ladder Tracker, so your first session starts from your numbers:\n{login_url}\n\nYour debt is not your character. It is your circumstance.\n\nMlinjana Financial Group\nEducation, not financial advice."}', false),
+  ('email_coach_approved', '{"status": "draft - Chuma to approve", "subject": "You''re approved for MFG coach training", "text": "Hi {first_name},\n\nThank you for applying to coach with MFG. You''ve been approved for training.\n\nLog in to see what happens next. The first time, you''ll set up two-step login with an authenticator app on your phone:\n{login_url}\n\nMFG will contact you on WhatsApp about your training.\n\nMlinjana Financial Group"}', false),
+  ('email_declined_coach', '{"status": "draft - Chuma to approve", "subject": "Your application to coach with MFG", "text": "Hi {first_name},\n\nThank you for applying to coach with MFG, and for wanting to help people climb out of debt.\n\nWe''re not taking your application further right now. This isn''t a judgement of you or of what you''ve lived through. It''s about where MFG is today.\n\nWe wish you well on your own climb.\n\nMlinjana Financial Group"}', false),
   ('store_signup_answers', 'false', false);

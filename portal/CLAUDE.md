@@ -19,3 +19,5 @@ You are building the **MFG Portal** for Mlinjana Financial Group (MFG), a South 
 6. **Plain South African English in the interface.** Short sentences, no jargon. Warm and never judging (§12).
 7. **MFG never recommends a financial product, lender, insurer or investment.** Nothing in the app may do so.
 8. **Write tests** for every calculation in §7 and every access rule in §10.
+
+@AGENTS.md

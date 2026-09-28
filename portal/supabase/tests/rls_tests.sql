@@ -37,7 +37,7 @@ grant execute on all functions in schema tests to anon, authenticated;
 -- Fixed ids so the tests read clearly.
 --   O  owner        A  coach, certified, capacity 1     B  coach, certified
 --   T  coach in training          C1, C2, C3  clients     X  applicant
-insert into auth.users values
+insert into auth.users (id, email) values
   ('00000000-0000-0000-0000-00000000000a','owner@example.test'),
   ('00000000-0000-0000-0000-0000000000a1','coach.a@example.test'),
   ('00000000-0000-0000-0000-0000000000b1','coach.b@example.test'),
@@ -89,7 +89,7 @@ select tests.check((select count(*) from public.debts) = 0, 'owner without two-s
 select tests.act('00000000-0000-0000-0000-00000000000a','aal2');
 select public.assign_client('00000000-0000-0000-0000-0000000000c1','00000000-0000-0000-0000-0000000000a1');
 select public.assign_client('00000000-0000-0000-0000-0000000000c2','00000000-0000-0000-0000-0000000000b1');
-select tests.check((select count(*) from public.debts) = 2, 'owner with two-step login sees every debt');
+select tests.check((select count(*) from public.debts where client_id in ('00000000-0000-0000-0000-0000000000c1','00000000-0000-0000-0000-0000000000c2')) = 2, 'owner with two-step login sees every debt');
 select tests.refused($$select public.assign_client('00000000-0000-0000-0000-0000000000c3','00000000-0000-0000-0000-0000000000a1')$$,
   'assignment to a full coach is blocked ("Coach A is full…")');
 select tests.refused($$select public.assign_client('00000000-0000-0000-0000-0000000000c3','00000000-0000-0000-0000-0000000000d1')$$,
@@ -153,7 +153,7 @@ select tests.check((select count(*) from public.debts) = 0, 'consent off: coach 
 select tests.check((select count(*) from public.notes) = 0, 'consent off: coach no longer sees past notes');
 select tests.check((select count(*) from public.clients) = 1, 'consent off: coach still sees the client row (to show "hasn''t shared yet")');
 select tests.act('00000000-0000-0000-0000-00000000000a','aal2');
-select tests.check((select count(*) from public.notes) = 1, 'consent off: owner still sees historic notes');
+select tests.check((select count(*) from public.notes where client_id='00000000-0000-0000-0000-0000000000c1') = 1, 'consent off: owner still sees historic notes');
 select tests.check((select count(*) from public.consent_events where client_id='00000000-0000-0000-0000-0000000000c1') = 2,
   'consent changes are recorded with a timestamp');
 select tests.act('00000000-0000-0000-0000-0000000000c1');
@@ -171,11 +171,15 @@ insert into public.coach_applications (full_name, email, whatsapp, province, exp
 values ('Applicant X','applicant@example.test','0720000000','Gauteng','Professional coach or mentor','Part of it',5,
         'I want to help people in my community get out of debt.', true);
 select tests.check((select count(*) from public.coach_applications) = 0, 'applicant cannot read applications back');
+select tests.check(public.my_application_status() = 'pending', 'applicant can see their own application status');
+select tests.act('00000000-0000-0000-0000-0000000000c2');
+select tests.check(public.my_application_status() is null, 'others see no application status');
+select tests.act('00000000-0000-0000-0000-0000000000e1');
 select tests.refused($$insert into public.coach_applications (full_name, email, whatsapp, province, experience, read_book, capacity, why, agreed_protocol)
   values ('Y','y@example.test','0720000000','Gauteng','Professional coach or mentor','Part of it',5,'too short', true)$$,
   '"why" under 20 characters is rejected');
 select tests.act('00000000-0000-0000-0000-00000000000a','aal2');
-select tests.check((select count(*) from public.coach_applications) = 1, 'owner reads applications');
+select tests.check((select count(*) from public.coach_applications where applicant_id='00000000-0000-0000-0000-0000000000e1') = 1, 'owner reads applications');
 
 -- Settlement order (§8), enforced in the database
 select tests.act('00000000-0000-0000-0000-0000000000c1');
@@ -214,8 +218,8 @@ select tests.act('00000000-0000-0000-0000-0000000000c2');
 -- Audit log records changes and views
 select public.log_view('00000000-0000-0000-0000-0000000000c2', 'dashboard');
 select tests.act('00000000-0000-0000-0000-00000000000a','aal2');
-select tests.check((select count(*) from public.audit_log where action = 'view') = 1, 'views are logged');
-select tests.check((select count(*) from public.audit_log where table_name = 'debts') >= 1, 'changes are logged');
+select tests.check((select count(*) from public.audit_log where action = 'view' and client_id='00000000-0000-0000-0000-0000000000c2') = 1, 'views are logged');
+select tests.check((select count(*) from public.audit_log where table_name = 'debts' and client_id='00000000-0000-0000-0000-0000000000c1') >= 1, 'changes are logged');
 
 reset role;
 \echo 'All access-rule tests passed.'

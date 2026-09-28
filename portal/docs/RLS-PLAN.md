@@ -1,6 +1,6 @@
 # RLS plan · MFG Portal
 
-Spec: `PORTAL_SPEC.md` §11.1. Draft SQL: `supabase/migrations/0001_schema_draft.sql`.
+Spec: `PORTAL_SPEC.md` §11.1. Draft SQL: `supabase/migrations/20260928000000_initial_schema.sql`.
 Tests: `supabase/tests/rls_tests.sql`, run with `supabase/tests/run-local.sh`.
 
 ## The three gates
@@ -51,20 +51,25 @@ On top of RLS:
 - Files are only served through `createSignedUrl(path, seconds)`, with a short expiry (proposed: 60 seconds).
 - I will confirm the exact helper for reading the folder name from the Supabase Storage access-control docs before writing these policies.
 
-## Tests (all passing locally: 47 checks)
+## Tests
 
-The local run uses real Postgres 16 with a stub of Supabase's `auth` schema. It covers:
+| Test | What it runs against | Result (28 Sep 2026) |
+| --- | --- | --- |
+| `supabase/tests/rls_tests.sql`: 49 access-rule checks | Plain Postgres 16 with a stand-in auth schema (`npm run test:db`), **and** the real local Supabase database (Postgres 17) | 49/49 pass on both |
+| `tests/integration/phase1.test.ts`: 8 checks | Real local Supabase, with real logins, real JWTs and real two-step codes through the API (`npm run test:integration`) | 8/8 pass |
+| `tests/e2e/phase1.e2e.mjs`: 10 checks | The real app in a real browser, local Supabase and the local email catcher (`npm run test:e2e`) | 10/10 pass |
 
+The checks cover:
 - signed-out visitors see nothing
 - clients see only their own rows and can't write someone else's
 - clients can't make themselves owner, confirm their own "Other" name or change coach status
 - coaches see only their assigned clients, only with consent on, only while certified, and only with two-step login
 - switching consent off cuts the coach off immediately; the owner still sees historic notes
 - only the owner assigns; the full-coach and in-training blocks work
-- coach applications are owner-read-only
+- coach applications are owner-read-only (the applicant sees only their own status)
 - the settlement order is enforced and the letter closes the account
 - help requests reach the right coach only
 - settings are protected
 - the audit log records changes and views
 
-**Still to do against a real Supabase project (Phase 1):** run the same test file there, using real JWTs through the API, not only SQL.
+**Still to do:** run the same tests against Chuma's hosted Supabase project once it exists.
