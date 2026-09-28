@@ -77,7 +77,7 @@ Everything in §14 Phase 1, **plus TOTP for owner and coach** (see §3):
 4. An email provider (see question 3) and DNS access to verify `mlinjanafinancialgroup.com`.
 5. The owner email(s) for `OWNER_EMAILS`.
 
-## 7. Questions for you
+## 7. Questions for you (all answered: see §8)
 
 1. **Repository:** keep `portal/` in this repo, or move it to a new repo?
 2. **Two-step login:** may I move TOTP for owner and coaches into Phase 1? Otherwise the database will refuse owner actions until Phase 6.
@@ -98,6 +98,13 @@ Still waiting on you, as the spec marks them (**not** invented here):
 
 | Date | Decision | Replaces |
 | --- | --- | --- |
+| 28 Sep 2026 | **New repository** `mfg-portal` (Chuma). The portal moves there with its history as soon as the repo exists and Claude has access. | §1 of this plan |
+| 28 Sep 2026 | **Two-step login (TOTP) for owner and coaches moves to Phase 1** (Chuma). | §14 Phase 6 |
+| 28 Sep 2026 | **Email provider: Resend** (Chuma), for app emails and as Supabase's SMTP. | §2 "suggest one" |
+| 28 Sep 2026 | **Consent off:** the assigned coach still sees the client's name and WhatsApp, and nothing else (Claude's call). | Question 4 |
+| 28 Sep 2026 | **Coach change:** the new coach can read earlier coaches' notes, so the client doesn't start over (Claude's call). | Question 5 |
+| 28 Sep 2026 | **Referrals** are not shown on the client's dashboard, but are included in "Download my data" (Claude's call; attorney to confirm). | Question 6 |
+| 28 Sep 2026 | **Owner as coach:** the owner gets the same "My clients" coach view as any coach, plus the owner view (Claude's call). | Question 7 |
 | 28 Sep 2026 | **Crisis helpline numbers are no longer a launch blocker** (Chuma). The portal can go live without them, and Chuma will add verified numbers in Settings later. Until then, the "I'm struggling" panel shows the §8 safety line without numbers. When numbers are entered, they appear with no code change. | §8 "LAUNCH BLOCKER" note, §12 last bullet, §15 checklist item |
 
 ## 9. How to check Phase 0
