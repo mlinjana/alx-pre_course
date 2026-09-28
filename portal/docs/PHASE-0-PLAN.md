@@ -89,7 +89,10 @@ Everything in §14 Phase 1, **plus TOTP for owner and coach** (see §3):
 8. **Spec cross-reference:** `CLAUDE.md` says RLS is in §10, but it is in §11. I've treated §11 as correct.
 
 Still waiting on you, as the spec marks them (**not** invented here):
-- verified crisis helpline numbers **(launch blocker)**
+- verified crisis helpline numbers: **deferred by Chuma (28 Sep 2026)** and not needed to build any phase.
+  - Until they are added, the "I'm struggling" panel shows the safety line without numbers.
+  - Chuma enters the numbers later in Settings. No code change is needed.
+  - Spec §12 and the §15 go-live checklist still list them as a launch blocker. Chuma to confirm whether that still applies.
 - the declined-coach and client-assigned email wording
 - deletion and retention rules
 - the Terms and Privacy text (attorney)
