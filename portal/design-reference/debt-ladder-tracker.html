@@ -1,0 +1,645 @@
+<title>Debt Ladder Tracker</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Oswald:wght@500;600;700&family=Space+Grotesk:wght@400;500;600&family=Space+Mono:wght@400;700&family=Caveat:wght@600&display=swap">
+<style>
+:root{
+  color-scheme: dark;
+  --deep:#04070C; --navy:#0D1526; --panel:#131E34; --panel2:#18253F;
+  --line:rgba(227,179,65,.22); --line-soft:rgba(245,240,228,.10);
+  --gold:#E3B341; --gold2:#F2D188; --cream:#F5F0E4; --muted:#A7AFC0;
+  --red:#E4705F; --red-bg:rgba(178,59,46,.18); --green:#6CC389; --green-bg:rgba(79,176,110,.15);
+  --amber:#F0A857; --amber-bg:rgba(240,168,87,.14);
+  --display:"Oswald","Arial Narrow",Arial,sans-serif;
+  --body:"Space Grotesk",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --mono:"Space Mono",ui-monospace,Menlo,Consolas,monospace;
+  --hand:"Caveat","Comic Sans MS",cursive;
+}
+*{box-sizing:border-box}
+html,body{background:var(--deep)}
+body{color:var(--cream);font-family:var(--body);font-size:16px;line-height:1.5;padding-inline:16px;padding-block:0 48px;
+  background:radial-gradient(1200px 500px at 70% -10%,rgba(227,179,65,.08),transparent 60%),var(--deep)}
+.wrap{max-width:980px;margin:0 auto}
+header.top{display:flex;align-items:center;justify-content:space-between;gap:12px;padding-block:18px;border-bottom:1px solid var(--line-soft);flex-wrap:wrap}
+.brand{display:flex;flex-direction:column;gap:2px}
+.brand b{font-family:var(--display);font-weight:600;letter-spacing:.14em;text-transform:uppercase;font-size:13px;color:var(--gold)}
+.brand span{font-size:13px;color:var(--muted)}
+.privacy{font-size:13px;color:var(--muted);display:flex;align-items:center;gap:8px}
+.privacy::before{content:"";width:8px;height:8px;border-radius:50%;background:var(--green);box-shadow:0 0 0 3px var(--green-bg)}
+.layout{display:grid;grid-template-columns:1fr;gap:24px;padding-top:24px}
+@media(min-width:860px){.layout{grid-template-columns:190px 1fr;gap:40px}}
+
+/* ladder */
+.ladder{position:relative}
+.ladder ol{list-style:none;margin:0;padding:0;display:flex;gap:6px}
+.ladder li{flex:1}
+.rung{all:unset;cursor:pointer;display:flex;flex-direction:column;gap:6px;width:100%}
+.rung .bar{height:8px;border-radius:2px;background:var(--panel2);border:1px solid var(--line-soft);transition:background .3s}
+.rung .lbl{font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);font-family:var(--display);display:none}
+.rung.done .bar{background:rgba(227,179,65,.45)}
+.rung.on .bar{background:var(--gold);box-shadow:0 0 18px rgba(227,179,65,.45)}
+.rung:focus-visible .bar{outline:2px solid var(--gold2);outline-offset:3px}
+.stepnow{margin-top:10px;font-size:13px;color:var(--muted)}
+@media(min-width:860px){
+  .ladder{padding:8px 22px;position:sticky;top:calc(env(safe-area-inset-top,0px) + 20px);height:max-content}
+  .ladder::before,.ladder::after{content:"";position:absolute;top:0;bottom:0;width:3px;background:linear-gradient(var(--gold),rgba(227,179,65,.25));border-radius:2px}
+  .ladder::before{left:0}.ladder::after{right:0}
+  .ladder ol{flex-direction:column-reverse;gap:26px}
+  .rung{flex-direction:row;align-items:center;justify-content:center;gap:0;position:relative;min-height:30px}
+  .rung .bar{position:absolute;left:-22px;right:-22px;height:6px;top:50%;transform:translateY(-50%);z-index:0}
+  .rung .lbl{display:block;position:relative;z-index:1;background:var(--deep);padding:2px 8px;font-size:12px;color:var(--cream);border-radius:2px}
+  .rung.on .lbl{color:var(--gold)}
+  .stepnow{display:none}
+}
+
+/* step */
+.eyebrow{font-family:var(--display);text-transform:uppercase;letter-spacing:.16em;font-size:12px;color:var(--gold)}
+h1{font-family:var(--display);font-weight:600;font-size:clamp(30px,6vw,46px);line-height:1.05;margin:8px 0 6px;text-wrap:balance;letter-spacing:.01em}
+h1 u{text-decoration:none;background:linear-gradient(var(--gold),var(--gold)) 0 92%/100% 3px no-repeat;padding-bottom:2px}
+.lead{color:var(--muted);max-width:62ch;margin:0 0 6px}
+.hand{font-family:var(--hand);color:var(--gold2);font-size:26px;line-height:1.1;margin:6px 0 22px;transform:rotate(-1.2deg);display:inline-block}
+h2{font-family:var(--display);font-weight:500;font-size:20px;letter-spacing:.04em;text-transform:uppercase;margin:0}
+.section{display:flex;flex-direction:column;gap:14px;margin-top:28px}
+.note{font-size:14px;color:var(--muted);max-width:66ch}
+
+/* cards */
+.card{background:var(--panel);border:1px solid var(--line-soft);border-radius:6px;padding:16px;position:relative}
+.ticks::before,.ticks::after{content:"";position:absolute;width:12px;height:12px;border-color:var(--gold);border-style:solid;pointer-events:none}
+.ticks::before{top:-1px;left:-1px;border-width:2px 0 0 2px}
+.ticks::after{bottom:-1px;right:-1px;border-width:0 2px 2px 0}
+
+/* debts */
+.debts{display:flex;flex-direction:column;gap:12px}
+.debt-head{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:10px}
+.debt-head input{flex:1;min-width:0}
+.fields{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+@media(min-width:620px){.fields{grid-template-columns:repeat(4,minmax(0,1fr))}}
+label.f{display:flex;flex-direction:column;gap:4px;font-size:12px;color:var(--muted);letter-spacing:.03em}
+input,select{font:inherit;color:var(--cream);background:var(--deep);border:1px solid rgba(245,240,228,.18);border-radius:4px;padding:10px 10px;width:100%;min-width:0}
+input:focus,select:focus{outline:none;border-color:var(--gold);box-shadow:0 0 0 3px rgba(227,179,65,.18)}
+input.num{font-family:var(--mono);font-variant-numeric:tabular-nums}
+.debt-head input{font-weight:600;background:transparent;border-color:transparent;padding-left:4px;font-size:17px}
+.debt-head input:hover{border-color:rgba(245,240,228,.14)}
+.dtitle{flex:1;min-width:0;font-weight:600;font-size:17px;overflow-wrap:anywhere}
+.insts{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:6px}
+.inst{all:unset;cursor:pointer;display:flex;align-items:center;gap:8px;padding:8px 10px;border-radius:5px;border:1px solid rgba(245,240,228,.14);background:var(--deep);font-size:13px;line-height:1.25}
+.inst:hover{border-color:rgba(227,179,65,.5)}
+.inst.on{border-color:var(--gold);background:rgba(227,179,65,.12)}
+.inst:focus-visible{outline:2px solid var(--gold2);outline-offset:2px}
+.mono{flex:none;width:30px;height:30px;border-radius:50%;display:grid;place-items:center;font-family:var(--display);font-size:12px;letter-spacing:.04em;color:var(--gold);border:1.5px solid rgba(227,179,65,.55);background:var(--navy)}
+.inst.on .mono{background:var(--gold);color:var(--deep)}
+.otherchk{margin-top:6px;font-size:13px;color:var(--muted);display:flex;gap:6px;align-items:center;flex-wrap:wrap}
+.cost{margin-top:12px;padding-top:10px;border-top:1px dashed var(--line-soft);font-size:14px;color:var(--muted);display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.cost strong{color:var(--cream);font-family:var(--mono);font-weight:700}
+.chip{font-family:var(--display);font-size:11px;letter-spacing:.1em;text-transform:uppercase;padding:3px 8px;border-radius:3px;white-space:nowrap}
+.chip.ex{background:rgba(242,209,136,.14);color:var(--gold2)}
+.chip.unk{background:var(--amber-bg);color:var(--amber)}
+.chip.bad{background:var(--red-bg);color:var(--red)}
+.chip.ok{background:var(--green-bg);color:var(--green)}
+.x{all:unset;cursor:pointer;color:var(--muted);font-size:13px;padding:6px 8px;border-radius:4px}
+.x:hover,.x:focus-visible{color:var(--red);background:var(--red-bg)}
+.banner{display:flex;gap:12px;align-items:center;justify-content:space-between;flex-wrap:wrap;background:rgba(242,209,136,.08);border:1px dashed rgba(242,209,136,.4);border-radius:6px;padding:12px 14px;font-size:14px}
+
+/* buttons */
+.btn{all:unset;cursor:pointer;font-family:var(--display);font-weight:500;text-transform:uppercase;letter-spacing:.12em;font-size:14px;padding:12px 18px;border-radius:4px;display:inline-flex;align-items:center;gap:8px;text-align:center}
+.btn.gold{background:var(--gold);color:var(--deep)}
+.btn.gold:hover{background:var(--gold2)}
+.btn.ghost{border:1px solid rgba(245,240,228,.25);color:var(--cream)}
+.btn.ghost:hover{border-color:var(--gold);color:var(--gold)}
+.btn.small{font-size:12px;padding:8px 12px}
+.btn:focus-visible{outline:2px solid var(--gold2);outline-offset:3px}
+.nav{display:flex;justify-content:space-between;gap:12px;margin-top:36px;padding-top:20px;border-top:1px solid var(--line-soft);flex-wrap:wrap}
+
+/* total strip */
+.total{display:flex;justify-content:space-between;align-items:flex-end;gap:12px;flex-wrap:wrap;padding:18px;border-radius:6px;background:linear-gradient(180deg,var(--panel2),var(--panel));border:1px solid var(--line)}
+.total .big{font-family:var(--mono);font-weight:700;font-size:clamp(28px,6vw,40px);color:var(--gold);font-variant-numeric:tabular-nums;line-height:1}
+.total small{display:block;color:var(--muted);font-size:13px;margin-top:6px}
+
+/* month */
+.group{display:flex;flex-direction:column;gap:8px}
+.group-head{display:flex;justify-content:space-between;align-items:baseline;gap:10px}
+.group-head h3{font-family:var(--display);font-weight:500;font-size:15px;letter-spacing:.12em;text-transform:uppercase;margin:0}
+.group-head .sum{font-family:var(--mono);color:var(--gold2)}
+.tag-critical h3{color:var(--cream)} .tag-important h3{color:var(--gold2)} .tag-reduce h3{color:var(--amber)} .tag-eliminate h3{color:var(--red)}
+.row{display:grid;grid-template-columns:minmax(0,1fr) 130px auto;gap:8px;align-items:center}
+.row input.lbl{background:transparent;border-color:rgba(245,240,228,.10)}
+.grid2{display:grid;grid-template-columns:1fr;gap:12px}
+@media(min-width:620px){.grid2{grid-template-columns:1fr 1fr}}
+
+/* board */
+.board{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:10px;background:#020408;border:1px solid #1d2638;border-radius:6px;padding:12px}
+.flap{background:#0a0f19;border-radius:4px;padding:12px 14px 14px;position:relative;overflow:hidden;min-height:108px;display:flex;flex-direction:column;justify-content:space-between}
+.flap::after{content:"";position:absolute;left:0;right:0;top:56%;height:1px;background:rgba(0,0,0,.9);box-shadow:0 1px 0 rgba(255,255,255,.04)}
+.flap .k{font-family:var(--display);font-size:11px;letter-spacing:.18em;text-transform:uppercase;color:var(--muted)}
+.flap .v{font-family:var(--mono);font-weight:700;font-size:clamp(22px,4.4vw,30px);color:var(--gold);font-variant-numeric:tabular-nums;letter-spacing:.04em;line-height:1.1;overflow-wrap:anywhere}
+.flap .s{font-size:12px;color:var(--muted)}
+.flap.red .v{color:var(--red)} .flap.green .v{color:var(--green)} .flap.amber .v{color:var(--amber)}
+@keyframes flip{0%{transform:rotateX(90deg);opacity:.2}100%{transform:none;opacity:1}}
+.flap .v.anim{animation:flip .45s ease-out}
+@media(prefers-reduced-motion:reduce){.flap .v.anim{animation:none}}
+
+.alert{border-radius:6px;padding:14px 16px;font-size:15px;border:1px solid}
+.alert b{display:block;font-family:var(--display);letter-spacing:.08em;text-transform:uppercase;font-size:13px;margin-bottom:4px}
+.alert.red{background:var(--red-bg);border-color:rgba(228,112,95,.45)} .alert.red b{color:var(--red)}
+.alert.amber{background:var(--amber-bg);border-color:rgba(240,168,87,.4)} .alert.amber b{color:var(--amber)}
+.alert.green{background:var(--green-bg);border-color:rgba(108,195,137,.4)} .alert.green b{color:var(--green)}
+
+.redlines{display:flex;flex-direction:column;gap:8px}
+.rl{display:grid;grid-template-columns:34px minmax(0,1fr) auto;gap:10px;align-items:center;padding:12px;border-radius:6px;background:var(--panel);border:1px solid var(--line-soft)}
+.rl .n{font-family:var(--mono);font-weight:700;color:var(--muted);text-align:center}
+.rl.flash{border-color:rgba(228,112,95,.55);background:linear-gradient(90deg,var(--red-bg),var(--panel) 70%)}
+.rl.flash .n{color:var(--red)}
+.yn{display:flex;gap:4px}
+.yn button{all:unset;cursor:pointer;font-size:13px;padding:6px 10px;border-radius:4px;border:1px solid rgba(245,240,228,.2);color:var(--muted)}
+.yn button[aria-pressed="true"]{background:var(--cream);color:var(--deep);border-color:var(--cream)}
+.yn button:focus-visible{outline:2px solid var(--gold2);outline-offset:2px}
+
+/* attack */
+.seg{display:inline-flex;border:1px solid rgba(245,240,228,.2);border-radius:5px;overflow:hidden}
+.seg button{all:unset;cursor:pointer;padding:10px 16px;font-family:var(--display);letter-spacing:.1em;text-transform:uppercase;font-size:13px;color:var(--muted)}
+.seg button[aria-pressed="true"]{background:var(--gold);color:var(--deep)}
+.seg button:focus-visible{outline:2px solid var(--gold2);outline-offset:-2px}
+.compare{display:grid;grid-template-columns:1fr;gap:12px}
+@media(min-width:620px){.compare{grid-template-columns:1fr 1fr}}
+.order{list-style:none;margin:10px 0 0;padding:0;display:flex;flex-direction:column;gap:6px;counter-reset:o}
+.order li{display:grid;grid-template-columns:26px minmax(0,1fr) auto;gap:8px;align-items:center;font-size:14px;counter-increment:o}
+.order li::before{content:counter(o);font-family:var(--mono);color:var(--muted);text-align:center}
+.order li:first-child::before{color:var(--deep);background:var(--gold);border-radius:3px;font-weight:700}
+.order li span:last-child{font-family:var(--mono);color:var(--muted);font-size:13px}
+.target{display:flex;gap:16px;align-items:center;flex-wrap:wrap}
+.target .name{font-family:var(--display);font-size:28px;font-weight:600;color:var(--gold)}
+.sim{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:10px}
+.sim > div{background:var(--deep);border-radius:4px;padding:12px;border:1px solid var(--line-soft)}
+.sim .k{font-size:12px;color:var(--muted);text-transform:uppercase;letter-spacing:.1em;font-family:var(--display)}
+.sim .v{font-family:var(--mono);font-size:20px;color:var(--cream);font-weight:700}
+
+/* progress */
+.chartbox{overflow-x:auto}
+svg text{font-family:var(--mono)}
+.log{display:flex;flex-direction:column;gap:6px}
+.log .row{grid-template-columns:130px minmax(0,1fr) auto}
+.confirm{display:flex;gap:10px;align-items:center;flex-wrap:wrap;font-size:14px}
+footer.disc{margin-top:40px;padding-top:16px;border-top:1px solid var(--line-soft);font-size:13px;color:var(--muted);display:flex;flex-direction:column;gap:6px}
+.toast{position:fixed;left:50%;bottom:calc(20px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--cream);color:var(--deep);padding:10px 16px;border-radius:4px;font-size:14px;box-shadow:0 8px 30px rgba(0,0,0,.5);max-width:calc(100% - 32px)}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
+</style>
+
+<div class="wrap">
+  <header class="top">
+    <div class="brand"><b>Mlinjana Financial Group</b><span>Debt Ladder Tracker · from <i>The Debt Millionaire</i></span></div>
+    <div class="privacy">Your numbers stay on this phone. No sign-up.</div>
+  </header>
+  <div class="layout">
+    <nav class="ladder" aria-label="Steps">
+      <ol id="rungs"></ol>
+      <div class="stepnow" id="stepnow"></div>
+    </nav>
+    <main id="main" tabindex="-1"></main>
+  </div>
+  <footer class="disc">
+    <span>Education, not financial advice. MFG teaches money skills. We do not give financial advice or sell financial products.</span>
+    <span>Talk to your MFG coach: WhatsApp 062 868 6293</span>
+  </footer>
+</div>
+<div class="toast" id="toast" hidden role="status"></div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script>
+(function(){
+const KEY="mfg-debt-ladder-v2";
+const STEPS=[
+ {id:1,short:"My debts",eyebrow:"Step 1 · Rungs 1 and 2 · Face the full truth",title:"Every debt. <u>Exactly.</u>",hand:"Not roughly. Exactly.",lead:"Write down every debt: cards, store accounts, loans, micro loans, \"pay later\", and money you owe family. If you don't know a rate or balance yet, leave it blank. We'll mark it UNKNOWN instead of guessing."},
+ {id:2,short:"My month",eyebrow:"Step 2 · Rung 3 · Stop the bleeding",title:"What comes in. <u>What goes out.</u>",hand:"Every rand gets a job.",lead:"Use your last three bank statements. Sort your costs into the four groups from the book: Critical, Important, Reduce and Eliminate. Your minimum debt payments come in automatically from Step 1."},
+ {id:3,short:"My numbers",eyebrow:"Step 3 · Chapter 9 · See where you stand",title:"Your numbers, <u>on the board.</u>",hand:"A truth you can see clearly is a problem you can solve.",lead:"Your debt load, your monthly gap, and the Five Red Lines. This is your starting point, not your character."},
+ {id:4,short:"My attack",eyebrow:"Step 4 · Rungs 4 and 5 · Choose your attack",title:"One debt at a time. <u>In order.</u>",hand:"The best one is the one you'll stick to.",lead:"Pay the minimum on every debt. Every extra rand goes to one target until it dies, then its whole payment rolls onto the next."},
+ {id:5,short:"My progress",eyebrow:"Step 5 · Make it visible",title:"Watch the number <u>shrink.</u>",hand:"Every month, the number is smaller.",lead:"Log your total once a month. When you're ready, download your summary and send it to your MFG coach."}
+];
+const TYPES=["Credit card","Store account","Personal loan","Micro / short-term loan","Vehicle finance","Home loan","Overdraft","Pay later","Cellphone contract","Informal lender (mashonisa)","Money owed to family","Other"];
+/* Real South African institutions per type. Banks: SARB register (as listed on Wikipedia, late 2024).
+   Others: named by SA money sites (JustMoney, Fundrate, MoneyToday) or well-established SA providers. Owner to re-check yearly. */
+const BANKS=["Absa","African Bank","Capitec","Discovery Bank","FNB","Investec","Nedbank","Standard Bank","TymeBank","Old Mutual","Bidvest Bank","Access Bank","Bank Zero","Ubank","GBS Mutual Bank","Finbond"];
+const INST={
+ "Credit card":["Absa","African Bank","Capitec","Discovery Bank","FNB","Investec","Nedbank","Standard Bank","Woolworths","RCS"],
+ "Store account":["Edgars","Truworths","Identity","TFG (Foschini, Markham, Sportscene, Totalsports)","Mr Price","Woolworths","Ackermans","Lewis","Beares","Best Home and Electric","RCS"],
+ "Personal loan":["Absa","African Bank","Capitec","FNB","Nedbank","Standard Bank","DirectAxis","FinChoice","Sanlam","Old Mutual Finance","Bayport","RCS","WesBank","Wonga"],
+ "Micro / short-term loan":["Wonga","FinChoice","Finbond","African Bank","Capitec"],
+ "Vehicle finance":["WesBank","Absa Vehicle and Asset Finance","Standard Bank Vehicle and Asset Finance","MFC (Nedbank)","Toyota Financial Services","BMW Financial Services","Mercedes-Benz Financial Services"],
+ "Home loan":["Absa","FNB","Nedbank","Standard Bank","Investec","SA Home Loans"],
+ "Overdraft":BANKS,
+ "Pay later":["Payflex","PayJustNow","MoreTyme (TymeBank)","Happy Pay","Float","Mobicred"],
+ "Cellphone contract":["Vodacom","MTN","Telkom","Cell C","Rain"]
+};
+const GENERIC=/^(loan|loans|bank|banks|card|credit|credit card|store|shop|account|store account|debt|unknown|n\/?a|none|other|test|asdf|qwerty|x+|\?+|money|lender|company|cash)$/i;
+function initials(n){const w=n.replace(/\(.*\)/,"").split(/[\s-]+/).filter(Boolean);return (w.length>1?w[0][0]+w[1][0]:w[0].slice(0,2)).toUpperCase()}
+function debtLabel(d){const who=d.inst==="__other"?(otherProblem(d.other)?"":d.other.trim()):d.inst==="__family"?(d.other?"Family: "+d.other:"Family"):d.inst==="__informal"?"Informal lender":d.inst;return who?`${who} · ${d.type}`:(d.name||d.type||"Debt")}
+function otherProblem(v){const t=(v||"").trim();if(t.length<3)return "Type the lender's name exactly as it appears on your statement.";if(GENERIC.test(t))return `"${t}" isn't a lender's name. Use the exact name on your statement or SMS.`;if(!/[a-z]/i.test(t))return "Use the lender's name, not a number.";return null}
+const STATUSES=[["current","Up to date"],["arrears","Behind on payments"],["attorneys","With attorneys"],["review","Under debt review"]];
+const GROUPS=[
+ ["critical","Critical","Must pay: rent, electricity, water, groceries, transport to work"],
+ ["important","Important","Try to pay: insurance, medical aid, school fees"],
+ ["reduce","Reduce","Cut hard: clothing, entertainment, eating out, extra data"],
+ ["eliminate","Eliminate","Stop tonight: subscriptions you barely use, luxuries, all new credit"]
+];
+const uid=()=>Math.random().toString(36).slice(2,9);
+function freshState(){
+  return {step:1,
+   debts:[
+    {id:uid(),name:"Bank loan",type:"Personal loan",inst:null,balance:45000,rate:18,min:1200,status:"current",example:true},
+    {id:uid(),name:"Credit card",type:"Credit card",inst:null,balance:12000,rate:24,min:480,status:"current",example:true},
+    {id:uid(),name:"Store account",type:"Store account",inst:null,balance:8000,rate:21,min:320,status:"current",example:true}
+   ],
+   month:{takeHome:null,gross:null,groups:{
+    critical:[["Rent"],["Electricity and water"],["Groceries"],["Transport to work"]].map(a=>({id:uid(),label:a[0],amt:null})),
+    important:[["Insurance and funeral cover"],["Medical aid"],["School fees"]].map(a=>({id:uid(),label:a[0],amt:null})),
+    reduce:[["Clothing"],["Eating out and takeaways"],["Entertainment"],["Extra data and airtime"]].map(a=>({id:uid(),label:a[0],amt:null})),
+    eliminate:[["Subscriptions you barely use"]].map(a=>({id:uid(),label:a[0],amt:null}))
+   }},
+   rl:{borrowing:null,missed:null,savings:null,minOnly:null},
+   attack:{method:"avalanche",extra:null},
+   progress:[]
+  };
+}
+let S;
+try{S=JSON.parse(localStorage.getItem(KEY)||"null")}catch(e){S=null}
+if(!S||!S.debts)S=freshState();
+function save(){try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){}}
+
+/* ---------- helpers ---------- */
+const $=s=>document.querySelector(s);
+const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const num=v=>(v===null||v===undefined||v===""||isNaN(v))?null:Number(v);
+function R(v,signed){if(v===null)return "—";const n=Math.round(Math.abs(v));const s=n.toString().replace(/\B(?=(\d{3})+(?!\d))/g,",");return (v<0?"−":(signed&&v>0?"+":""))+"R"+s}
+function pct(v){return v===null?"—":(Math.round(v*10)/10).toFixed(1)+"%"}
+function months(n){if(n===null)return "—";if(n<12)return n+" month"+(n===1?"":"s");const y=Math.floor(n/12),m=n%12;return y+" yr"+(y>1?"s":"")+(m?" "+m+" mo":"")}
+function toast(msg){const t=$("#toast");t.textContent=msg;t.hidden=false;clearTimeout(toast.h);toast.h=setTimeout(()=>t.hidden=true,2600)}
+function monthLabel(ym){const [y,m]=ym.split("-").map(Number);return ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"][m-1]+" "+String(y).slice(2)}
+function thisMonth(){const d=new Date();return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")}
+
+/* ---------- calculations (book: Ch 4, 5, 9) ---------- */
+function payoff(balance,rate,pay){ // months + interest at a fixed monthly payment
+  if(balance===null||rate===null||pay===null||pay<=0)return null;
+  const r=rate/100/12;let b=balance,m=0,int=0;
+  if(b<=0)return {months:0,interest:0};
+  if(pay<=b*r+0.005)return {never:true};
+  while(b>0.005&&m<1200){const i=b*r;int+=i;b=b+i-pay;m++}
+  return {months:m,interest:int};
+}
+function totals(){
+  const d=S.debts;
+  const total=d.reduce((a,x)=>a+(num(x.balance)||0),0);
+  const mins=d.reduce((a,x)=>a+(num(x.min)||0),0);
+  const unknown=d.filter(x=>num(x.balance)===null||num(x.rate)===null||num(x.min)===null||(!x.example&&instMissing(x))).length;
+  const g={};GROUPS.forEach(([k])=>g[k]=S.month.groups[k].reduce((a,x)=>a+(num(x.amt)||0),0));
+  const th=num(S.month.takeHome),gross=num(S.month.gross);
+  const gapNow=th===null?null:th-(g.critical+g.important+g.reduce+g.eliminate+mins);
+  const gapCut=th===null?null:th-(g.critical+g.important+mins);
+  const load=(gross&&gross>0)?mins/gross*100:null;
+  return {total,mins,unknown,g,th,gross,gapNow,gapCut,load};
+}
+function loadBand(l){
+  if(l===null)return null;
+  if(l>50)return {cls:"red",txt:"Red Line 1: more than half your pay is promised to debt."};
+  if(l>=40)return {cls:"amber",txt:"The book notes banks generally stop approving bonds around 40–45%."};
+  if(l>35)return {cls:"amber",txt:"Above the wealth-builder's target of 35%."};
+  if(l>25)return {cls:"green",txt:"Inside the target: below 35%."};
+  return {cls:"green",txt:"Below 25%: where the best opportunities open."};
+}
+function orders(){
+  const d=S.debts.filter(x=>(num(x.balance)||0)>0);
+  const byRate=[...d].sort((a,b)=>{const ra=num(a.rate),rb=num(b.rate);if(ra===null&&rb===null)return 0;if(ra===null)return 1;if(rb===null)return -1;return rb-ra});
+  const byBal=[...d].sort((a,b)=>num(a.balance)-num(b.balance));
+  return {byRate,byBal};
+}
+function simulate(order,extra){ // whole plan with roll-over; needs every rate + min
+  const ds=order.map(x=>({b:num(x.balance),r:num(x.rate)/100/12,m:num(x.min)}));
+  if(ds.some(x=>x.b===null||isNaN(x.r)||x.m===null))return null;
+  const budget=ds.reduce((a,x)=>a+x.m,0)+(extra||0);
+  let m=0,int=0;
+  while(ds.some(x=>x.b>0.005)&&m<1200){
+    ds.forEach(x=>{if(x.b>0.005){const i=x.b*x.r;int+=i;x.b+=i}});
+    let left=budget;
+    ds.forEach(x=>{if(x.b>0.005){const p=Math.min(x.m,x.b);x.b-=p;left-=p}});
+    for(const x of ds){if(left<=0)break;if(x.b>0.005){const p=Math.min(left,x.b);x.b-=p;left-=p}}
+    m++;
+    if(m===1200)return {never:true};
+  }
+  return {months:m,interest:int};
+}
+
+/* ---------- ladder ---------- */
+function renderLadder(){
+  $("#rungs").innerHTML=STEPS.map(s=>`<li><button class="rung ${s.id===S.step?"on":""} ${s.id<S.step?"done":""}" data-go="${s.id}" aria-current="${s.id===S.step?"step":"false"}" aria-label="Step ${s.id}: ${s.short}"><span class="bar"></span><span class="lbl">${s.id} · ${s.short}</span></button></li>`).join("");
+  $("#stepnow").textContent=`Step ${S.step} of 5 · ${STEPS[S.step-1].short}`;
+}
+function go(n){S.step=Math.min(5,Math.max(1,n));save();render();$("#main").focus({preventScroll:true});window.scrollTo({top:0,behavior:matchMedia("(prefers-reduced-motion:reduce)").matches?"auto":"smooth"})}
+
+/* ---------- step views ---------- */
+function head(){const s=STEPS[S.step-1];return `<div class="eyebrow">${s.eyebrow}</div><h1>${s.title}</h1><p class="lead">${s.lead}</p><div class="hand">${s.hand}</div>`}
+function navBar(){return `<div class="nav">${S.step>1?`<button class="btn ghost" data-go="${S.step-1}">← Back</button>`:"<span></span>"}${S.step<5?`<button class="btn gold" data-go="${S.step+1}">Next: ${STEPS[S.step].short} →</button>`:`<button class="btn gold" id="pdf">Download my summary (PDF)</button>`}</div>`}
+
+function instPicker(x){
+  if(x.type==="Money owed to family")return `<label class="f" style="grid-column:1/-1">Who do you owe? (e.g. my uncle, my cousin Sipho)<input data-f="other" value="${esc(x.other||"")}" placeholder="Who in your family"></label>`;
+  if(x.type==="Informal lender (mashonisa)")return `<div class="note" style="grid-column:1/-1">Informal lenders often charge far more than the law allows. List it anyway: your coach needs the full truth. If you feel threatened, tell your coach.</div>`;
+  const list=INST[x.type]||[];
+  const tiles=list.map(n=>`<button type="button" class="inst ${x.inst===n?"on":""}" data-inst="${esc(n)}" aria-pressed="${x.inst===n}"><span class="mono" aria-hidden="true">${initials(n)}</span><span>${esc(n)}</span></button>`).join("");
+  const oth=`<button type="button" class="inst ${x.inst==="__other"?"on":""}" data-inst="__other" aria-pressed="${x.inst==="__other"}"><span class="mono" aria-hidden="true">+</span><span>Other</span></button>`;
+  const prob=x.inst==="__other"?otherProblem(x.other):null;
+  return `<div style="grid-column:1/-1"><div class="note" style="margin-bottom:6px">${list.length?"Who is it with?":"Who is it with? Type the name from your statement."}</div>
+   <div class="insts" role="group" aria-label="Institution">${tiles}${oth}</div>
+   ${x.inst==="__other"||!list.length?`<label class="f" style="margin-top:8px">Name exactly as it appears on your statement or SMS<input data-f="other" value="${esc(x.other||"")}" placeholder="e.g. the company name on your statement"></label><div class="otherchk" id="oc-${x.id}">${prob?`<span class="chip unk">Needs a real name</span> ${esc(prob)}`:x.other?`<span class="chip ok">Thanks</span> Your coach will check this name against your statement.`:""}</div>`:""}</div>`;
+}
+function debtCard(x){
+  const opt=TYPES.map(t=>`<option ${t===x.type?"selected":""}>${esc(t)}</option>`).join("");
+  const st=STATUSES.map(([v,l])=>`<option value="${v}" ${v===x.status?"selected":""}>${l}</option>`).join("");
+  const title=x.example?x.name:debtLabel(x);
+  return `<div class="card" data-debt="${x.id}">
+   <div class="debt-head"><span class="dtitle" id="dt-${x.id}">${esc(title)}</span>${x.example?'<span class="chip ex">Example</span>':""}<button class="x" data-del="${x.id}" aria-label="Remove ${esc(title)}">Remove</button></div>
+   <div class="fields">
+    <label class="f" style="grid-column:1/-1">What kind of debt?<select data-f="type">${opt}</select></label>
+    ${instPicker(x)}
+    <label class="f">Balance owed (R)<input class="num" inputmode="decimal" data-f="balance" value="${x.balance??""}" placeholder="From statement"></label>
+    <label class="f">Interest rate (% a year)<input class="num" inputmode="decimal" data-f="rate" value="${x.rate??""}" placeholder="From statement"></label>
+    <label class="f">Minimum (R a month)<input class="num" inputmode="decimal" data-f="min" value="${x.min??""}" placeholder="From statement"></label>
+    <label class="f">Status<select data-f="status">${st}</select></label>
+   </div>
+   <div class="cost" id="cost-${x.id}"></div>
+  </div>`;
+}
+function instMissing(x){if(x.type==="Informal lender (mashonisa)")return false;if(x.type==="Money owed to family")return !(x.other||"").trim();if(x.inst==="__other"||!(INST[x.type]||[]).length)return !!otherProblem(x.other);return !x.inst}
+function costHTML(x){
+  const b=num(x.balance),r=num(x.rate),m=num(x.min);
+  const unk=[];if(!x.example&&instMissing(x))unk.push("who it's with");if(b===null)unk.push("balance");if(r===null)unk.push("rate");if(m===null)unk.push("minimum");
+  let out="";
+  if(unk.length)out+=`<span class="chip unk">Unknown: ${unk.join(", ")}</span><span>Get it from your statement. We won't guess.</span>`;
+  else{
+    const p=payoff(b,r,m);
+    if(p&&p.never)out+=`<span class="chip bad">Never clears</span><span>This minimum doesn't even cover the interest. The balance will grow.</span>`;
+    else if(p)out+=`<span>True cost at the minimum:</span><strong>${months(p.months)}</strong><span>and</span><strong>${R(p.interest)}</strong><span>in interest.</span>`;
+  }
+  if(x.status==="attorneys")out+=`<span class="chip bad">With attorneys</span><span>Get legal advice before you negotiate this one.</span>`;
+  if(x.status==="review")out+=`<span class="chip unk">Debt review</span><span>Extra payments go through your debt counsellor and PDA only.</span>`;
+  return out;
+}
+function viewDebts(){
+  const hasEx=S.debts.some(d=>d.example);
+  return head()+`
+  ${hasEx?`<div class="banner"><span>The debts below are the worked examples from Chapter 4 of the book. Replace them with yours.</span><button class="btn ghost small" id="clearEx">Clear examples</button></div>`:""}
+  <div class="section"><div class="debts" id="debts">${S.debts.map(debtCard).join("")}</div>
+  <div><button class="btn ghost" id="addDebt">+ Add a debt</button></div></div>
+  <div class="section"><div class="total ticks"><div><div class="eyebrow">Total you owe</div><div class="big" id="bigTotal"></div><small id="totalNote"></small></div><div style="text-align:right"><div class="eyebrow">Minimums each month</div><div class="big" style="font-size:24px" id="bigMins"></div></div></div>
+  <p class="note">Write the total down. Date it. Keep it. Watching it shrink will carry you through the hard months.</p></div>`+navBar();
+}
+function viewMonth(){
+  const groups=GROUPS.map(([k,l,d])=>`<div class="card group tag-${k}"><div class="group-head"><h3>${l}</h3><span class="sum" id="sum-${k}"></span></div><div class="note" style="font-size:13px">${d}</div>
+   <div class="log" id="g-${k}">${S.month.groups[k].map(it=>`<div class="row" data-item="${it.id}" data-g="${k}"><input class="lbl" aria-label="Item" data-i="label" value="${esc(it.label)}"><input class="num" inputmode="decimal" aria-label="${esc(it.label)} amount" data-i="amt" value="${it.amt??""}" placeholder="R"><button class="x" data-delitem="${it.id}" data-g="${k}" aria-label="Remove ${esc(it.label)}">×</button></div>`).join("")}</div>
+   <div><button class="btn ghost small" data-additem="${k}">+ Add item</button></div></div>`).join("");
+  return head()+`
+  <div class="section"><div class="grid2">
+   <label class="f">Take-home pay (R a month, after deductions)<input class="num" inputmode="decimal" id="takeHome" value="${S.month.takeHome??""}" placeholder="What lands in your account"></label>
+   <label class="f">Pay before deductions (R a month)<input class="num" inputmode="decimal" id="gross" value="${S.month.gross??""}" placeholder="Top of your payslip"></label>
+  </div><p class="note">Pay before deductions is used for your debt load, the way Chapter 9 works it out.</p></div>
+  <div class="section"><div class="grid2">${groups}</div></div>
+  <div class="section"><div class="card"><div class="group-head"><h3>Minimum debt payments</h3><span class="sum" id="sum-mins"></span></div><div class="note" style="font-size:13px">From Step 1, including any accounts you aren't paying right now. An unpaid account is not a saving.</div></div></div>`+navBar();
+}
+function viewNumbers(){
+  const t=totals();
+  const rlq=[
+   ["borrowing","Are you borrowing to pay other debts?"],
+   ["missed","Three or more missed payments in the last six months?"],
+   ["savings","Do you have NO emergency fund or savings at all?"],
+   ["minOnly","Are you paying only the minimum on debt charging 20% or more?"]
+  ];
+  const hi=S.debts.some(d=>(num(d.rate)||0)>=20);
+  return head()+`
+  <div class="section"><div class="board" id="board"></div></div>
+  <div class="section" id="alerts"></div>
+  <div class="section"><h2>The Five Red Lines</h2><p class="note">From Chapter 9. If any of these is true, it's an alarm, not a suggestion.</p>
+   <div class="redlines">
+    <div class="rl" id="rl1"><span class="n">1</span><span>More than half your pay is promised to debt <span class="note" style="display:block;font-size:13px">Worked out from your debt load</span></span><span class="chip" id="rl1chip"></span></div>
+    ${rlq.map(([k,q],i)=>`<div class="rl ${S.rl[k]===true?"flash":""}" id="rl-${k}"><span class="n">${i+2}</span><span>${q}${k==="minOnly"&&hi?'<span class="note" style="display:block;font-size:13px">You have at least one debt at 20% or more.</span>':""}</span><span class="yn" role="group" aria-label="${esc(q)}"><button data-rl="${k}" data-v="yes" aria-pressed="${S.rl[k]===true}">Yes</button><button data-rl="${k}" data-v="no" aria-pressed="${S.rl[k]===false}">No</button></span></div>`).join("")}
+   </div></div>`+navBar();
+}
+function viewAttack(){
+  const {byRate,byBal}=orders();
+  const list=(arr,key)=>`<ol class="order">${arr.map(d=>`<li><span>${esc(d.example?d.name:debtLabel(d))}</span><span>${key==="rate"?(num(d.rate)===null?"rate ?":num(d.rate)+"%"):R(num(d.balance))}</span></li>`).join("")}</ol>`;
+  const same=byRate[0]&&byBal[0]&&byRate[0].id===byBal[0].id;
+  return head()+`
+  <div class="section"><div class="compare">
+   <div class="card"><h2>Avalanche</h2><p class="note">Highest interest rate first. Costs the least interest.</p>${list(byRate,"rate")}</div>
+   <div class="card"><h2>Snowball</h2><p class="note">Smallest balance first. Quick wins keep you going.</p>${list(byBal,"bal")}</div>
+  </div>
+  ${byRate.length?(same?`<div class="alert green"><b>They line up</b>Both methods point at the same debt first, just like Chuma's micro loans. You get the quick win and the cheapest route at once.</div>`:`<div class="alert amber"><b>They point at different debts</b>Know yourself. The perfect strategy you abandon in month four is worth less than the imperfect one you follow to the end.</div>`):""}
+  ${byRate.some(d=>num(d.rate)===null)?`<p class="note">Debts with an unknown rate sit at the bottom of the Avalanche list until you add the rate.</p>`:""}
+  </div>
+  <div class="section"><h2>My choice</h2>
+   <div class="seg" role="group" aria-label="Method"><button data-method="avalanche" aria-pressed="${S.attack.method==="avalanche"}">Avalanche</button><button data-method="snowball" aria-pressed="${S.attack.method==="snowball"}">Snowball</button></div>
+   <label class="f" style="max-width:320px">Extra I can add each month (R), on top of minimums<input class="num" inputmode="decimal" id="extra" value="${S.attack.extra??""}" placeholder="Even R100 counts"></label>
+   <div class="card ticks" id="targetCard"></div>
+   <div id="simBox"></div>
+  </div>`+navBar();
+}
+function viewProgress(){
+  const t=totals();
+  return head()+`
+  <div class="section"><div class="card"><div class="chartbox" id="chart"></div></div></div>
+  <div class="section"><h2>Log this month</h2>
+   <div class="grid2">
+    <label class="f">Month<input type="month" id="logMonth" value="${thisMonth()}"></label>
+    <label class="f">Total debt (R)<input class="num" inputmode="decimal" id="logTotal" value="${Math.round(t.total)||""}"></label>
+   </div>
+   <div><button class="btn gold small" id="logAdd">Log it</button></div>
+   <div class="log" id="logList"></div>
+  </div>
+  <div class="section"><h2>Start fresh</h2><p class="note">Clears everything on this phone. Download your summary first if you want to keep it.</p>
+   <div class="confirm" id="resetBox"><button class="btn ghost small" id="reset">Clear all my numbers</button></div>
+  </div>`+navBar();
+}
+
+/* ---------- live updates ---------- */
+function update(){
+  const t=totals();
+  if(S.step===1){
+    $("#bigTotal").textContent=R(t.total);
+    $("#bigMins").textContent=R(t.mins);
+    $("#totalNote").textContent=`${S.debts.length} debt${S.debts.length===1?"":"s"} · dated ${new Date().toLocaleDateString("en-ZA",{day:"numeric",month:"long",year:"numeric"})}${t.unknown?` · ${t.unknown} with unknowns`:""}`;
+    S.debts.forEach(x=>{const el=$("#cost-"+x.id);if(el)el.innerHTML=costHTML(x)});
+  }
+  if(S.step===2){
+    GROUPS.forEach(([k])=>{$("#sum-"+k).textContent=R(t.g[k])});
+    $("#sum-mins").textContent=R(t.mins);
+  }
+  if(S.step===3)updateBoard(t);
+  if(S.step===4)updateAttack();
+  if(S.step===5)updateProgress();
+}
+function flap(k,v,s,cls){return `<div class="flap ${cls||""}"><span class="k">${k}</span><span class="v anim">${v}</span><span class="s">${s||""}</span></div>`}
+function updateBoard(t){
+  const band=loadBand(t.load);
+  $("#board").innerHTML=
+   flap("Total debt",R(t.total),`${S.debts.length} creditors`)+
+   flap("Debt load",t.load===null?"ADD PAY":pct(t.load),t.load===null?"Add pay before deductions in Step 2":"Minimums ÷ pay before deductions",band?band.cls:"amber")+
+   flap("Gap this month",t.gapNow===null?"ADD PAY":R(t.gapNow,true),t.gapNow===null?"Add take-home pay in Step 2":(t.gapNow<0?"Short every month":"Left over"),t.gapNow===null?"amber":(t.gapNow<0?"red":"green"))+
+   flap("After cutting",t.gapCut===null?"—":R(t.gapCut,true),"If Reduce and Eliminate go to zero",t.gapCut===null?"":(t.gapCut<0?"red":"green"));
+  let a="";
+  if(band)a+=`<div class="alert ${band.cls}"><b>Debt load ${pct(t.load)}</b>${band.txt}</div>`;
+  if(t.gapCut!==null&&t.gapCut<0)a+=`<div class="alert red"><b>The maths is broken, not you</b>Even after cutting Reduce and Eliminate, your pay can't cover essentials plus minimum payments. Chapter 5 says this is the sign to speak to an NCR-registered debt counsellor. Your MFG coach can help you prepare for that conversation.</div>`;
+  else if(t.gapNow!==null&&t.gapNow<0)a+=`<div class="alert amber"><b>The gap closes if you cut</b>Your Reduce and Eliminate lists are where this month's shortfall is hiding. Start with Eliminate tonight.</div>`;
+  if(S.debts.some(d=>d.status==="attorneys"))a+=`<div class="alert red"><b>An account is with attorneys</b>Get legal advice before you negotiate that account.</div>`;
+  if(t.unknown)a+=`<div class="alert amber"><b>${t.unknown} debt${t.unknown>1?"s have":" has"} unknowns</b>Your numbers are only as true as your list. Fill in the blanks from your statements.</div>`;
+  $("#alerts").innerHTML=a;
+  const f1=t.load!==null&&t.load>50;
+  $("#rl1").classList.toggle("flash",f1);
+  const c=$("#rl1chip");c.className="chip "+(t.load===null?"unk":f1?"bad":"ok");c.textContent=t.load===null?"Add pay":f1?"Flashing":"Clear";
+}
+function updateAttack(){
+  const {byRate,byBal}=orders();
+  const order=S.attack.method==="avalanche"?byRate:byBal;
+  const extra=num(S.attack.extra)||0;
+  const tc=$("#targetCard");
+  if(!order.length){tc.innerHTML=`<p class="note">Add your debts in Step 1 first.</p>`;$("#simBox").innerHTML="";return}
+  const tg=order[0];
+  const p=payoff(num(tg.balance),num(tg.rate),(num(tg.min)||0)+extra);
+  let when;
+  if(num(tg.rate)===null||num(tg.min)===null)when=`Add this debt's rate and minimum in Step 1 to see when it dies.`;
+  else if(p&&p.never)when=`At ${R((num(tg.min)||0)+extra)} a month this debt never clears. The payment must be bigger than the interest.`;
+  else if(p)when=`At ${R((num(tg.min)||0)+extra)} a month, it's gone in about <strong style="font-family:var(--mono);color:var(--cream)">${months(p.months)}</strong>. Then its whole payment rolls onto the next debt.`;
+  const flag=tg.status==="review"?`<p class="note">This debt is under debt review. Extra payments go through your counsellor and PDA only.</p>`:tg.status==="attorneys"?`<p class="note">This debt is with attorneys. Get legal advice before paying extra or negotiating.</p>`:"";
+  tc.innerHTML=`<div class="eyebrow">Target #1</div><div class="target"><span class="name">${esc(tg.example?tg.name:debtLabel(tg))}</span><span class="chip ex">${R(num(tg.balance))}${num(tg.rate)!==null?" · "+num(tg.rate)+"%":""}</span></div><p class="note" style="margin-top:8px">${when}</p>${flag}`;
+  const simA=simulate(byRate,extra),simB=simulate(byBal,extra);
+  if(!simA||!simB){$("#simBox").innerHTML=`<p class="note">Add every rate and minimum in Step 1 to see your full debt-free date for both methods.</p>`;return}
+  const cell=(k,s)=>s.never?`<div><div class="k">${k}</div><div class="v" style="color:var(--red)">Never clears</div></div>`:`<div><div class="k">${k}</div><div class="v">${months(s.months)}</div><div class="note" style="font-size:13px">${R(s.interest)} total interest</div></div>`;
+  $("#simBox").innerHTML=`<p class="note" style="margin:6px 0">Your whole plan, with every freed-up payment rolled forward. Estimates only: they assume rates and payments stay the same.</p><div class="sim">${cell("Debt-free · Avalanche",simA)}${cell("Debt-free · Snowball",simB)}</div>`;
+}
+function updateProgress(){
+  const P=[...S.progress].sort((a,b)=>a.month.localeCompare(b.month));
+  $("#logList").innerHTML=P.map(p=>`<div class="row"><span style="font-family:var(--mono)">${monthLabel(p.month)}</span><span style="font-family:var(--mono);color:var(--gold2)">${R(p.total)}</span><button class="x" data-dellog="${p.month}" aria-label="Remove ${monthLabel(p.month)}">×</button></div>`).join("")||`<p class="note">Nothing logged yet. Log your first total above: that's your starting bar.</p>`;
+  const box=$("#chart");
+  if(!P.length){box.innerHTML=`<p class="note" style="margin:0">Your chart appears here once you log your first month.</p>`;return}
+  const W=Math.max(320,P.length*72+60),H=240,pl=64,pb=30,pt=18;
+  const max=Math.max(...P.map(p=>p.total))||1;
+  const nice=(()=>{const e=Math.pow(10,Math.floor(Math.log10(max)));const f=max/e;const s=f<=1?1:f<=2?2:f<=5?5:10;return s*e})();
+  const y=v=>pt+(H-pt-pb)*(1-v/nice);
+  const bw=Math.min(44,(W-pl-20)/P.length*0.6);
+  let g="";
+  for(let i=0;i<=4;i++){const v=nice*i/4;g+=`<line x1="${pl}" x2="${W-10}" y1="${y(v)}" y2="${y(v)}" stroke="rgba(245,240,228,.08)"/><text x="${pl-8}" y="${y(v)+4}" text-anchor="end" font-size="11" fill="#A7AFC0">${R(v)}</text>`}
+  P.forEach((p,i)=>{const cx=pl+(i+.5)*(W-pl-10)/P.length;const last=i===P.length-1;
+   g+=`<rect x="${cx-bw/2}" y="${y(p.total)}" width="${bw}" height="${Math.max(0,H-pb-y(p.total))}" rx="2" fill="${last?"#E3B341":"rgba(227,179,65,.42)"}"/><text x="${cx}" y="${H-10}" text-anchor="middle" font-size="11" fill="#A7AFC0">${monthLabel(p.month)}</text>${last?`<text x="${cx}" y="${y(p.total)-6}" text-anchor="middle" font-size="12" font-weight="700" fill="#F2D188">${R(p.total)}</text>`:""}`});
+  const first=P[0].total,lastv=P[P.length-1].total,diff=first-lastv;
+  box.innerHTML=`<svg width="${W}" height="${H}" viewBox="0 0 ${W} ${H}" role="img" aria-label="Total debt by month">${g}</svg>`+(P.length>1?`<p class="note" style="margin:8px 0 0">${diff>0?`Down ${R(diff)} since ${monthLabel(P[0].month)}. You're winning slowly.`:diff<0?`Up ${R(-diff)} since ${monthLabel(P[0].month)}. Look for new credit and talk to your coach.`:"Holding steady."}</p>`:"");
+}
+
+/* ---------- render + events ---------- */
+function render(){
+  renderLadder();
+  const v=[viewDebts,viewMonth,viewNumbers,viewAttack,viewProgress][S.step-1]();
+  $("#main").innerHTML=v;update();
+}
+document.addEventListener("click",async e=>{
+  const b=e.target.closest("button");if(!b)return;
+  if(b.dataset.go){go(+b.dataset.go);return}
+  if(b.id==="addDebt"){S.debts.push({id:uid(),name:"",type:"Credit card",inst:null,other:"",balance:null,rate:null,min:null,status:"current"});save();render();const c=document.querySelectorAll("[data-debt]");c[c.length-1].querySelector("select").focus();return}
+  if(b.dataset.inst){const card=b.closest("[data-debt]");const d=S.debts.find(x=>x.id===card.dataset.debt);d.inst=b.dataset.inst;if(d.inst!=="__other")d.other="";d.example=false;save();render();
+    if(d.inst==="__other"){const i=document.querySelector(`[data-debt="${d.id}"] input[data-f=other]`);i&&i.focus()}return}
+  if(b.dataset.del){S.debts=S.debts.filter(d=>d.id!==b.dataset.del);save();render();return}
+  if(b.id==="clearEx"){S.debts=S.debts.filter(d=>!d.example);if(!S.debts.length)S.debts.push({id:uid(),name:"",type:"Credit card",inst:null,other:"",balance:null,rate:null,min:null,status:"current"});save();render();toast("Examples cleared. Add your first debt.");return}
+  if(b.dataset.additem){S.month.groups[b.dataset.additem].push({id:uid(),label:"",amt:null});save();render();return}
+  if(b.dataset.delitem){const k=b.dataset.g;S.month.groups[k]=S.month.groups[k].filter(i=>i.id!==b.dataset.delitem);save();render();return}
+  if(b.dataset.rl){S.rl[b.dataset.rl]=b.dataset.v==="yes";save();
+    b.parentElement.querySelectorAll("button").forEach(x=>x.setAttribute("aria-pressed",String(x===b)));
+    $("#rl-"+b.dataset.rl).classList.toggle("flash",S.rl[b.dataset.rl]===true);return}
+  if(b.dataset.method){S.attack.method=b.dataset.method;save();document.querySelectorAll("[data-method]").forEach(x=>x.setAttribute("aria-pressed",String(x===b)));updateAttack();return}
+  if(b.id==="logAdd"){const m=$("#logMonth").value,v=num($("#logTotal").value);if(!m||v===null){toast("Add a month and a total first.");return}
+    S.progress=S.progress.filter(p=>p.month!==m);S.progress.push({month:m,total:v});save();updateProgress();toast(`Logged ${monthLabel(m)}: ${R(v)}`);return}
+  if(b.dataset.dellog){S.progress=S.progress.filter(p=>p.month!==b.dataset.dellog);save();updateProgress();return}
+  if(b.id==="reset"){$("#resetBox").innerHTML=`<span>This deletes every number on this phone.</span><button class="btn gold small" id="resetYes">Yes, clear everything</button><button class="btn ghost small" id="resetNo">Keep my numbers</button>`;return}
+  if(b.id==="resetNo"){render();return}
+  if(b.id==="resetYes"){S=freshState();S.debts=[{id:uid(),name:"",type:"Credit card",inst:null,other:"",balance:null,rate:null,min:null,status:"current"}];save();go(1);toast("Cleared. Start with your first debt.");return}
+  if(b.id==="pdf"){makePDF(b);return}
+});
+document.addEventListener("input",e=>{
+  const el=e.target;
+  const card=el.closest("[data-debt]");
+  if(card&&el.dataset.f){const d=S.debts.find(x=>x.id===card.dataset.debt);const f=el.dataset.f;
+    d[f]=(["balance","rate","min"].includes(f))?num(el.value.replace(/[^\d.]/g,"")):el.value;
+    if(d.example&&["balance","rate","min","name","other"].includes(f))d.example=false;
+    if(f==="other"){const oc=$("#oc-"+d.id);if(oc){const pr=otherProblem(d.other);oc.innerHTML=pr?`<span class="chip unk">Needs a real name</span> ${esc(pr)}`:`<span class="chip ok">Thanks</span> Your coach will check this name against your statement.`}}
+    const dt=$("#dt-"+d.id);if(dt)dt.textContent=debtLabel(d);
+    save();update();return}
+  const row=el.closest("[data-item]");
+  if(row){const it=S.month.groups[row.dataset.g].find(i=>i.id===row.dataset.item);
+    if(el.dataset.i==="amt")it.amt=num(el.value.replace(/[^\d.]/g,""));else it.label=el.value;save();update();return}
+  if(el.id==="takeHome"||el.id==="gross"){S.month[el.id]=num(el.value.replace(/[^\d.]/g,""));save();return}
+  if(el.id==="extra"){S.attack.extra=num(el.value.replace(/[^\d.]/g,""));save();updateAttack();return}
+});
+document.addEventListener("change",e=>{const el=e.target;const card=el.closest("[data-debt]");if(card&&el.tagName==="SELECT"){const d=S.debts.find(x=>x.id===card.dataset.debt);d[el.dataset.f]=el.value;
+  if(el.dataset.f==="type"){if(!(INST[d.type]||[]).includes(d.inst)&&d.inst!=="__other")d.inst=null;d.example=false;save();render();return}save();update()}});
+
+/* ---------- PDF ---------- */
+let downloads=null;
+if(window.claude&&window.claude.use){window.claude.use("downloads").then(d=>{downloads=d}).catch(()=>{})}
+async function makePDF(btn){
+  if(!window.jspdf){toast("The PDF maker didn't load. Check your connection and try again.");return}
+  const t=totals();const {byRate,byBal}=orders();const order=S.attack.method==="avalanche"?byRate:byBal;
+  const {jsPDF}=window.jspdf;const doc=new jsPDF({unit:"mm",format:"a4"});
+  const W=210,M=16;let y=0;
+  const NAVY=[13,21,38],GOLD=[227,179,65],INK=[20,26,38],GREY=[105,112,128],RED=[178,59,46],GREEN=[47,130,78];
+  const money=v=>v===null?"—":(v<0?"-":"")+"R"+Math.round(Math.abs(v)).toString().replace(/\B(?=(\d{3})+(?!\d))/g,",");
+  function need(h){if(y+h>282){doc.addPage();y=18}}
+  function h2(s){need(14);y+=6;doc.setFont("helvetica","bold");doc.setFontSize(11);doc.setTextColor(...NAVY);doc.text(s.toUpperCase(),M,y);doc.setDrawColor(...GOLD);doc.setLineWidth(.6);doc.line(M,y+1.6,M+22,y+1.6);y+=7}
+  function line(k,v,col){need(7);doc.setFont("helvetica","normal");doc.setFontSize(10);doc.setTextColor(...GREY);doc.text(k,M,y);doc.setFont("helvetica","bold");doc.setTextColor(...(col||INK));doc.text(String(v),W-M,y,{align:"right"});y+=6}
+  function para(s,col){doc.setFont("helvetica","normal");doc.setFontSize(9.5);doc.setTextColor(...(col||GREY));const L=doc.splitTextToSize(s,W-2*M);need(L.length*4.6+2);doc.text(L,M,y);y+=L.length*4.6+1}
+  // header
+  doc.setFillColor(...NAVY);doc.rect(0,0,W,34,"F");doc.setFillColor(...GOLD);doc.rect(0,34,W,1.2,"F");
+  doc.setTextColor(...GOLD);doc.setFont("helvetica","bold");doc.setFontSize(9);doc.text("MLINJANA FINANCIAL GROUP",M,11);
+  doc.setTextColor(245,240,228);doc.setFontSize(20);doc.text("My Debt Ladder Summary",M,22);
+  doc.setFontSize(9);doc.setFont("helvetica","normal");doc.text("Prepared "+new Date().toLocaleDateString("en-ZA",{day:"numeric",month:"long",year:"numeric"})+"  ·  Restructure. Rebuild. Rise.",M,29);
+  y=44;
+  if(S.debts.some(d=>d.example))para("Note: this summary still includes example debts from the book. Replace them with your own before sending.",RED);
+  h2("My debts");
+  const cols=[M,M+50,M+82,M+100,M+122,M+150];
+  need(8);doc.setFont("helvetica","bold");doc.setFontSize(8.5);doc.setTextColor(...GREY);
+  ["Creditor","Balance","Rate","Minimum","Status","Cost at minimum"].forEach((h,i)=>doc.text(h,cols[i],y));y+=2;doc.setDrawColor(210,210,215);doc.setLineWidth(.2);doc.line(M,y,W-M,y);y+=5;
+  S.debts.forEach(d=>{need(7);doc.setFont("helvetica","normal");doc.setFontSize(9);doc.setTextColor(...INK);
+    const b=num(d.balance),r=num(d.rate),m=num(d.min);const p=payoff(b,r,m);
+    const st=(STATUSES.find(s=>s[0]===d.status)||["",""])[1];
+    doc.text(doc.splitTextToSize(d.example?d.name:debtLabel(d),46)[0],cols[0],y);
+    doc.text(b===null?"UNKNOWN":money(b),cols[1],y);doc.text(r===null?"UNKNOWN":r+"%",cols[2],y);doc.text(m===null?"UNKNOWN":money(m),cols[3],y);
+    doc.text(st,cols[4],y);
+    doc.text(p===null?"Needs all figures":p.never?"Never clears":months(p.months)+", "+money(p.interest),cols[5],y);y+=6});
+  y+=1;line("Total owed",money(t.total),NAVY);line("Minimum payments each month",money(t.mins));
+  if(t.unknown)para(`${t.unknown} debt(s) have unknown figures. These totals are only as complete as the list.`);
+  h2("My month");
+  line("Take-home pay",money(t.th));line("Pay before deductions",money(t.gross));
+  GROUPS.forEach(([k,l])=>line(l,money(t.g[k])));line("Minimum debt payments",money(t.mins));
+  line("Gap this month",t.gapNow===null?"—":money(t.gapNow),t.gapNow!==null&&t.gapNow<0?RED:GREEN);
+  line("Gap if Reduce and Eliminate are cut",t.gapCut===null?"—":money(t.gapCut),t.gapCut!==null&&t.gapCut<0?RED:GREEN);
+  h2("My numbers");
+  const band=loadBand(t.load);
+  line("Debt load",t.load===null?"Add pay before deductions":pct(t.load),band&&band.cls==="red"?RED:null);
+  if(band)para(band.txt);
+  const rls=[["More than half your pay is promised to debt",t.load===null?null:t.load>50],["Borrowing to pay debts",S.rl.borrowing],["3+ missed payments in six months",S.rl.missed],["No emergency fund or savings",S.rl.savings],["Only minimums on 20%+ debt",S.rl.minOnly]];
+  rls.forEach(([q,v],i)=>line(`Red Line ${i+1}: ${q}`,v===null?"Not answered":v?"FLASHING":"Clear",v?RED:v===false?GREEN:GREY));
+  if(t.gapCut!==null&&t.gapCut<0)para("Even after cuts, pay doesn't cover essentials plus minimums. Chapter 5 says this is the sign to speak to an NCR-registered debt counsellor.",RED);
+  h2("My attack plan");
+  line("Method",S.attack.method==="avalanche"?"Avalanche (highest rate first)":"Snowball (smallest balance first)");
+  line("Extra each month on top of minimums",money(num(S.attack.extra)||0));
+  order.forEach((d,i)=>line(`${i+1}. ${d.example?d.name:debtLabel(d)}`,money(num(d.balance))+(num(d.rate)!==null?"  ·  "+num(d.rate)+"%":""),i===0?NAVY:null));
+  const sim=simulate(order,num(S.attack.extra)||0);
+  if(sim&&!sim.never)para(`Estimated debt-free in about ${months(sim.months)}, with about ${money(sim.interest)} in total interest, if rates and payments stay the same.`);
+  if(S.progress.length){h2("My progress");[...S.progress].sort((a,b)=>a.month.localeCompare(b.month)).forEach(p=>line(monthLabel(p.month),money(p.total)))}
+  need(20);y+=6;doc.setDrawColor(...GOLD);doc.setLineWidth(.4);doc.line(M,y,W-M,y);y+=6;
+  para("Education, not financial advice. Mlinjana Financial Group teaches money skills; we do not give financial advice or sell financial products. Figures are estimates based on what you entered.");
+  para("Send this summary to your MFG coach: WhatsApp 062 868 6293.",NAVY);
+  const blob=doc.output("blob");
+  const name="Debt-Ladder-Summary-"+new Date().toISOString().slice(0,10)+".pdf";
+  let dl=downloads;
+  if(!dl&&window.claude&&window.claude.use){try{dl=await window.claude.use("downloads")}catch(e){dl=null}}
+  if(!dl){toast("Downloads aren't available in this view.");return}
+  try{btn.disabled=true;await dl.save({filename:name,data:blob});toast("Summary saved.")}
+  catch(err){const c=err&&err.code;toast(c==="declined"?"Download cancelled.":c==="rate_limited"?"One moment, then try again.":"Couldn't save the PDF here.")}
+  finally{btn.disabled=false}
+}
+
+render();
+})();
+</script>
