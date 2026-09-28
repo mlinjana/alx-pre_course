@@ -68,15 +68,17 @@ export function monthNumbers(takeHome: number | null, gross: number | null, g: G
 export type Band = { tone: "red" | "amber" | "green"; text: string; rung: 1 | 2 | 3 | 4 | 5 };
 
 /**
- * Debt-load bands (§7.3) and the rung they give (§8). Boundaries follow the prototype:
- * above 50 · 40–50 · above 35 to below 40 · above 25 to 35 · 25 and below.
+ * Debt-load bands (§7.3) and the rung they give (§8), one rule for both screens.
+ * Each range includes its lower edge, as the spec reads ("Below 25%" means under 25):
+ * above 50 → 1 · 40 to 50 → 2 · 35 to under 40 → 3 · 25 to under 35 → 4 · under 25 → 5.
+ * (Same as the coach-portal prototype's rungOf. The Tracker prototype put 35 and 25 one band lower.)
  */
 export function loadBand(load: number | null): Band | null {
   if (load === null) return null;
   if (load > 50) return { tone: "red", rung: 1, text: "Red Line 1: more than half your pay is promised to debt." };
   if (load >= 40) return { tone: "amber", rung: 2, text: "The book notes banks generally stop approving bonds around 40–45%." };
-  if (load > 35) return { tone: "amber", rung: 3, text: "Above the wealth-builder's target of 35%." };
-  if (load > 25) return { tone: "green", rung: 4, text: "Inside the target: below 35%." };
+  if (load >= 35) return { tone: "amber", rung: 3, text: "Above the wealth-builder's target of 35%." };
+  if (load >= 25) return { tone: "green", rung: 4, text: "Inside the target: below 35%." };
   return { tone: "green", rung: 5, text: "Below 25%: where the best opportunities open." };
 }
 

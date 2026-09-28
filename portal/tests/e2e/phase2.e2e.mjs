@@ -27,16 +27,18 @@ try {
   // ------------------------------------------------------------ Step 1
   await page.click('button:has-text("+ Add a debt")');
   await card(0).locator("select").first().selectOption("Credit card");
-  await card(0).getByRole("button", { name: "FNB" }).click();
+  await card(0).getByLabel("Who is it with?").selectOption({ label: "FNB" });
   await card(0).getByLabel("Balance owed (R)").fill("14800");
   await card(0).getByLabel("Interest rate (% a year)").fill("21");
   await card(0).getByLabel("Minimum (R a month)").fill("974");
   await card(0).getByText("True cost at the minimum:").waitFor();
-  ok("debt 1 (FNB credit card) shows its true cost at the minimum");
+  const options = await card(0).getByLabel("Who is it with?").locator("option").allTextContents();
+  assert(options.includes("Standard Bank") && options.at(-1) === "Other (type the name)", "banks offered in a dropdown, with Other last");
+  ok("debt 1: FNB chosen from the dropdown; true cost at the minimum shown");
 
   await page.click('button:has-text("+ Add a debt")');
   await card(1).locator("select").first().selectOption("Store account");
-  await card(1).getByRole("button", { name: "Other" }).click();
+  await card(1).getByLabel("Who is it with?").selectOption({ label: "Other (type the name)" });
   await card(1).getByLabel("Name exactly as it appears on your statement or SMS").fill("store");
   await card(1).getByText("'store' isn't a lender's name. Use the exact name on your statement or SMS.").waitFor();
   await card(1).getByLabel("Name exactly as it appears on your statement or SMS").fill("Ubuntu Furnishers");

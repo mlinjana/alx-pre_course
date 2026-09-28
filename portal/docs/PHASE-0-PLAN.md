@@ -105,6 +105,8 @@ Still waiting on you, as the spec marks them (**not** invented here):
 | 28 Sep 2026 | **Coach change:** the new coach can read earlier coaches' notes, so the client doesn't start over (Claude's call). | Question 5 |
 | 28 Sep 2026 | **Referrals** are not shown on the client's dashboard, but are included in "Download my data" (Claude's call; attorney to confirm). | Question 6 |
 | 28 Sep 2026 | **Owner as coach:** the owner gets the same "My clients" coach view as any coach, plus the owner view (Claude's call). | Question 7 |
+| 28 Sep 2026 | **Banks and account providers are chosen from a dropdown**, not tiles (Chuma). | §7.1 "Institution picker. Tiles with a monogram badge" |
+| 28 Sep 2026 | **One rule for debt-load bands and rungs:** each range includes its lower edge (35% → rung 3, 25% → rung 4), as the spec's words read (Claude's call; the prototypes disagreed). | Tracker prototype band edges |
 | 28 Sep 2026 | **Crisis helpline numbers are no longer a launch blocker** (Chuma). The portal can go live without them, and Chuma will add verified numbers in Settings later. Until then, the "I'm struggling" panel shows the §8 safety line without numbers. When numbers are entered, they appear with no code change. | §8 "LAUNCH BLOCKER" note, §12 last bullet, §15 checklist item |
 
 ## 9. How to check Phase 0

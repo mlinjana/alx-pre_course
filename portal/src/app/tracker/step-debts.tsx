@@ -1,10 +1,12 @@
 "use client";
 
-import { initials, otherNameProblem, payoff, type Payoff } from "@/lib/calc/tracker";
+import { otherNameProblem, payoff, type Payoff } from "@/lib/calc/tracker";
 import { longDate, monthsText, rand } from "@/lib/format";
 import { DEBT_TYPES, STATUSES, debtLabel, hasList, newDebt, type TDebt } from "@/lib/tracker/model";
 import { deleteDebt, saveDebt } from "./actions";
 import type { StepProps } from "./tracker";
+
+const OTHER = "__other";
 
 export function StepDebts({ data, setData, schedule, institutions, calc }: StepProps) {
   function commit(debts: TDebt[], changed?: TDebt, now = false) {
@@ -141,39 +143,34 @@ function DebtCard({
         )}
         {!family && !informal && (
           <div className="wide">
-            <div className="note" style={{ marginBottom: 6 }}>
-              {list.length ? "Who is it with?" : "Who is it with? Type the name from your statement."}
-            </div>
-            {list.length > 0 && (
-              <div className="insts" role="group" aria-label="Institution">
-                {list.map((inst) => (
-                  <button
-                    key={inst.id}
-                    type="button"
-                    className="inst"
-                    aria-pressed={d.institutionId === inst.id}
-                    onClick={() => update(d.id, { institutionId: inst.id, useOther: false }, true)}
-                  >
-                    <span className="mono" aria-hidden>
-                      {initials(inst.name)}
-                    </span>
-                    <span>{inst.name}</span>
-                  </button>
-                ))}
-                <button
-                  type="button"
-                  className="inst"
-                  aria-pressed={d.useOther && !d.institutionId}
-                  onClick={() => {
-                    update(d.id, { institutionId: null, useOther: true }, true);
-                    setTimeout(() => document.getElementById(`other-${d.id}`)?.focus(), 0);
+            {list.length > 0 ? (
+              // Dropdown (Chuma's choice, 28 Sep 2026) instead of the prototype's tiles.
+              <label className="f">
+                Who is it with?
+                <select
+                  value={d.institutionId ?? (d.useOther ? OTHER : "")}
+                  onChange={(e) => {
+                    const v = e.target.value;
+                    if (v === OTHER) {
+                      update(d.id, { institutionId: null, useOther: true }, true);
+                      setTimeout(() => document.getElementById(`other-${d.id}`)?.focus(), 0);
+                    } else {
+                      update(d.id, { institutionId: v || null, useOther: false }, true);
+                    }
                   }}
                 >
-                  <span className="mono" aria-hidden>
-                    +
-                  </span>
-                  <span>Other</span>
-                </button>
+                  <option value="">Choose one</option>
+                  {list.map((inst) => (
+                    <option key={inst.id} value={inst.id}>
+                      {inst.name}
+                    </option>
+                  ))}
+                  <option value={OTHER}>Other (type the name)</option>
+                </select>
+              </label>
+            ) : (
+              <div className="note" style={{ marginBottom: 6 }}>
+                Who is it with? Type the name from your statement.
               </div>
             )}
             {showOther && (

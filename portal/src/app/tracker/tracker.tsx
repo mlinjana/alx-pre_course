@@ -1,8 +1,8 @@
 "use client";
 
 import { useMemo, useRef, useState } from "react";
-import { attackOrders, debtTotals, monthNumbers, parseAmount } from "@/lib/calc/tracker";
-import { groupTotals, toCalcDebt, type Institution, type TrackerData } from "@/lib/tracker/model";
+import { type Institution, type TrackerData } from "@/lib/tracker/model";
+import { computeCalc, type Calc } from "@/lib/tracker/compute";
 import { useAutosave } from "./use-autosave";
 import { StepDebts } from "./step-debts";
 import { StepMonth } from "./step-month";
@@ -145,24 +145,7 @@ export function Tracker({
   );
 }
 
-/** Everything the steps show, worked out from what's on screen. */
-export function computeCalc(data: TrackerData, institutions: Institution[]) {
-  const debts = data.debts.map((d) => toCalcDebt(d, institutions));
-  const totals = debtTotals(debts);
-  const groups = groupTotals(data.budget.items);
-  const takeHome = parseAmount(data.budget.takeHome);
-  const gross = parseAmount(data.budget.gross);
-  return {
-    debts,
-    totals,
-    groups,
-    takeHome,
-    gross,
-    numbers: monthNumbers(takeHome, gross, groups, totals.minimums),
-    orders: attackOrders(debts),
-  };
-}
-export type Calc = ReturnType<typeof computeCalc>;
+export type { Calc };
 
 export type StepProps = {
   data: TrackerData;

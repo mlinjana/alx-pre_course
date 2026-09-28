@@ -111,9 +111,11 @@ describe("my numbers (§7.3)", () => {
     expect(loadBand(44.2)).toMatchObject({ rung: 2, text: "The book notes banks generally stop approving bonds around 40–45%." });
     expect(loadBand(40)).toMatchObject({ rung: 2 });
     expect(loadBand(38)).toMatchObject({ rung: 3, text: "Above the wealth-builder's target of 35%." });
-    expect(loadBand(35)).toMatchObject({ rung: 4, text: "Inside the target: below 35%." });
+    expect(loadBand(35)).toMatchObject({ rung: 3 }); // 35 is not "below 35%"
+    expect(loadBand(34.9)).toMatchObject({ rung: 4, text: "Inside the target: below 35%." });
     expect(loadBand(31.4)).toMatchObject({ rung: 4 });
-    expect(loadBand(25)).toMatchObject({ rung: 5, text: "Below 25%: where the best opportunities open." });
+    expect(loadBand(25)).toMatchObject({ rung: 4 }); // 25 is not "below 25%"
+    expect(loadBand(24.9)).toMatchObject({ rung: 5, text: "Below 25%: where the best opportunities open." });
     expect(loadBand(0)).toMatchObject({ rung: 5 });
     expect(loadBand(null)).toBeNull();
   });

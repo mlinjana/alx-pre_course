@@ -3,7 +3,7 @@ import { jsPDF } from "jspdf";
 import { MATHS_BROKEN, loadBand, payoff, simulatePlan } from "@/lib/calc/tracker";
 import { longDate, monthLabel, monthsText } from "@/lib/format";
 import { GROUPS, RED_LINE_QUESTIONS, STATUSES, type Institution, type TrackerData } from "@/lib/tracker/model";
-import type { Calc } from "./tracker";
+import type { Calc } from "@/lib/tracker/compute";
 
 const FOOTER =
   "Education, not financial advice. Mlinjana Financial Group teaches money skills; we do not give financial advice or sell financial products.";

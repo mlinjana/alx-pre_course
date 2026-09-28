@@ -57,6 +57,7 @@ Plain steps for Chuma. Each step says where to click. Where a name on screen dif
    - `NEXT_PUBLIC_AUTH_GOOGLE=true`
    - `EMAIL_API_KEY` (Resend key) and `EMAIL_FROM`, for example `MFG Portal <portal@mlinjanafinancialgroup.com>`
    - `STAFF_IDLE_TIMEOUT_MINUTES=30`
+   - `CRON_SECRET`: a random string of at least 16 characters (per Vercel's docs). The daily payday-reminder job in `vercel.json` checks it.
 3. Deploy.
 4. **Settings → Domains:** add `portal.mlinjanafinancialgroup.com` and follow the DNS instructions.
 5. Check Vercel's current terms: a business site needs a plan that allows commercial use.
