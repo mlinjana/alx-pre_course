@@ -3,7 +3,7 @@
 Secure web app for Mlinjana Financial Group clients, coaches and the owner.
 It will live at **portal.mlinjanafinancialgroup.com**.
 
-**Status:** Phase 1 built and tested locally (see `docs/PHASE-1-REPORT.md`). Waiting for Chuma's check.
+**Status:** Phases 1 and 2 built and tested locally (see `docs/PHASE-1-REPORT.md` and `docs/PHASE-2-REPORT.md`).
 
 | File | What it is |
 | --- | --- |

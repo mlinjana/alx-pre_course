@@ -11,11 +11,12 @@
     "test:db": "bash supabase/tests/run-local.sh",
     "typecheck": "tsc --noEmit",
     "test:integration": "vitest run --config vitest.integration.config.mts",
-    "test:e2e": "node tests/e2e/phase1.e2e.mjs"
+    "test:e2e": "node tests/e2e/phase1.e2e.mjs && node tests/e2e/phase2.e2e.mjs"
   },
   "dependencies": {
     "@supabase/ssr": "^0.12.7",
     "@supabase/supabase-js": "^2.117.2",
+    "jspdf": "^4.2.1",
     "next": "16.3.6",
     "react": "19.2.8",
     "react-dom": "19.2.8",

@@ -55,7 +55,7 @@ On top of RLS:
 
 | Test | What it runs against | Result (28 Sep 2026) |
 | --- | --- | --- |
-| `supabase/tests/rls_tests.sql`: 49 access-rule checks | Plain Postgres 16 with a stand-in auth schema (`npm run test:db`), **and** the real local Supabase database (Postgres 17) | 49/49 pass on both |
+| `supabase/tests/rls_tests.sql`: 57 access-rule checks | Plain Postgres 16 with a stand-in auth schema (`npm run test:db`), **and** the real local Supabase database (Postgres 17) | 57/57 pass on both |
 | `tests/integration/phase1.test.ts`: 8 checks | Real local Supabase, with real logins, real JWTs and real two-step codes through the API (`npm run test:integration`) | 8/8 pass |
 | `tests/e2e/phase1.e2e.mjs`: 10 checks | The real app in a real browser, local Supabase and the local email catcher (`npm run test:e2e`) | 10/10 pass |
 

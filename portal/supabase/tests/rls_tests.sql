@@ -221,5 +221,40 @@ select tests.act('00000000-0000-0000-0000-00000000000a','aal2');
 select tests.check((select count(*) from public.audit_log where action = 'view' and client_id='00000000-0000-0000-0000-0000000000c2') = 1, 'views are logged');
 select tests.check((select count(*) from public.audit_log where table_name = 'debts' and client_id='00000000-0000-0000-0000-0000000000c1') >= 1, 'changes are logged');
 
+-- ---------------------------------------------------------------- Phase 2: Tracker rows
+select tests.act('00000000-0000-0000-0000-0000000000c2');
+insert into public.month_budget (id, client_id, month, take_home, gross)
+  values ('00000000-0000-0000-0000-0000000b0dc2','00000000-0000-0000-0000-0000000000c2','2026-09-01',12000,16000);
+insert into public.budget_items (budget_id, client_id, grp, label, amount)
+  values ('00000000-0000-0000-0000-0000000b0dc2','00000000-0000-0000-0000-0000000000c2','critical','Rent',4000);
+select tests.check((select count(*) from public.budget_items) = 1, 'client saves their own budget items');
+
+select tests.act('00000000-0000-0000-0000-0000000000c1');
+select tests.refused($$insert into public.budget_items (budget_id, client_id, grp, label, amount)
+  values ('00000000-0000-0000-0000-0000000b0dc2','00000000-0000-0000-0000-0000000000c1','critical','Sneaky',1)$$,
+  'client cannot attach an item to someone else''s budget');
+select tests.check((select count(*) from public.month_budget) = 0, 'client cannot see another client''s budget');
+
+insert into public.debts (id, client_id, debt_type, balance, rate, minimum)
+  values ('00000000-0000-0000-0000-00000000d0c3','00000000-0000-0000-0000-0000000000c1','Credit card',1000,20,50);
+select tests.check((select count(*) from public.debts where id='00000000-0000-0000-0000-00000000d0c3') = 1,
+  'client creates a debt with the id the app chose');
+select tests.refused($$update public.debts set institution_id = (select id from public.institutions where debt_type='Cellphone contract' limit 1)
+  where id='00000000-0000-0000-0000-00000000d0c3'$$,
+  'an institution must be listed for the debt''s type');
+update public.debts set institution_id = (select id from public.institutions where debt_type='Credit card' and name='FNB')
+  where id='00000000-0000-0000-0000-00000000d0c3';
+select tests.check((select institution_id is not null from public.debts where id='00000000-0000-0000-0000-00000000d0c3'),
+  'a listed institution is accepted');
+select tests.refused($$update public.debts set other_name = 'Ubuntu Lending Co' where id='00000000-0000-0000-0000-00000000d0c3'$$,
+  'a debt names its lender one way only');
+
+-- Changing a coach-confirmed "Other" name needs a new confirmation
+update public.debts set other_name = 'Ubuntu Lending Company' where id='00000000-0000-0000-0000-00000000d0c1';
+reset role;
+select tests.check((select not other_confirmed from public.debts where id='00000000-0000-0000-0000-00000000d0c1'),
+  'a changed "Other" name goes back to "Coach to confirm"');
+set role authenticated;
+
 reset role;
 \echo 'All access-rule tests passed.'
