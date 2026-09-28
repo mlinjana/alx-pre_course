@@ -89,16 +89,18 @@ Everything in §14 Phase 1, **plus TOTP for owner and coach** (see §3):
 8. **Spec cross-reference:** `CLAUDE.md` says RLS is in §10, but it is in §11. I've treated §11 as correct.
 
 Still waiting on you, as the spec marks them (**not** invented here):
-- verified crisis helpline numbers: **deferred by Chuma (28 Sep 2026)** and not needed to build any phase.
-  - Until they are added, the "I'm struggling" panel shows the safety line without numbers.
-  - Chuma enters the numbers later in Settings. No code change is needed.
-  - Spec §12 and the §15 go-live checklist still list them as a launch blocker. Chuma to confirm whether that still applies.
 - the declined-coach and client-assigned email wording
 - deletion and retention rules
 - the Terms and Privacy text (attorney)
 - the data region (attorney)
 
-## 8. How to check Phase 0
+## 8. Decisions that change the spec
+
+| Date | Decision | Replaces |
+| --- | --- | --- |
+| 28 Sep 2026 | **Crisis helpline numbers are no longer a launch blocker** (Chuma). The portal can go live without them, and Chuma will add verified numbers in Settings later. Until then, the "I'm struggling" panel shows the §8 safety line without numbers. When numbers are entered, they appear with no code change. | §8 "LAUNCH BLOCKER" note, §12 last bullet, §15 checklist item |
+
+## 9. How to check Phase 0
 
 1. Read this plan and `docs/RLS-PLAN.md`.
 2. Optional, needs PostgreSQL 16 installed: run `bash supabase/tests/run-local.sh` in `portal/`. The last line should be **"All access-rule tests passed."**

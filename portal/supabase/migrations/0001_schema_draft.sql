@@ -721,7 +721,7 @@ end $$;
 
 insert into public.settings (key, value, public_read) values
   ('momentum_weights', '{"reduced":40,"closed":20,"updates":25,"no_new_credit":15,"reduced_full_at_pct":50}', false),
-  ('crisis_helplines', '{"verified":false,"lines":[],"note":"[VERIFIED SOUTH AFRICAN HELPLINE NUMBERS TO BE PROVIDED BY CHUMA — LAUNCH BLOCKER]"}', true),
+  ('crisis_helplines', '{"verified":false,"lines":[],"note":"[VERIFIED SOUTH AFRICAN HELPLINE NUMBERS TO BE PROVIDED BY CHUMA — not a launch blocker, decision 28 Sep 2026]"}', true),
   ('email_declined_coach', '{"text":"[CHUMA TO PROVIDE]"}', false),
   ('email_client_assigned', '{"text":"[CHUMA TO PROVIDE]"}', false),
   ('store_signup_answers', 'false', false);
