@@ -7,8 +7,6 @@ from pathlib import Path
 
 from .memory import Memory
 
-TEXT_EXTENSIONS = {".txt", ".md", ".csv", ".json", ".log"}
-MAX_READ_BYTES = 200_000
 
 _STR = {"type": "string"}
 
@@ -41,22 +39,82 @@ OPEN = _tool(
 )
 CREATE_FILE = _tool(
     "create_text_file",
-    "Create a text file inside the JARVIS workspace folder. filename is a name "
-    "or sub-path inside the workspace ending in .txt, .md, .csv, .json or .log. "
-    "If the file already exists this fails unless overwrite is true - ask the "
-    "user before overwriting.",
-    {"filename": _STR, "content": _STR, "overwrite": {"type": "boolean"}},
-    ["filename", "content"],
+    "Create a new text file (.txt .md .csv .json .log .html) inside one of the "
+    "allowed folders. Never overwrites. The user is shown the exact file and "
+    "contents and must say yes before it is created.",
+    {"path": _STR, "content": _STR}, ["path", "content"],
 )
 READ_FILE = _tool(
     "read_text_file",
-    "Read a text file from inside the JARVIS workspace folder.",
-    {"filename": _STR}, ["filename"],
+    "Read a text file inside one of the allowed folders.",
+    {"path": _STR}, ["path"],
 )
-LIST_FILES = _tool(
-    "list_workspace_files",
-    "List the files currently in the JARVIS workspace folder.",
+LIST_FOLDER = _tool(
+    "list_folder",
+    "List what is in an allowed folder. Leave folder empty for the workspace.",
+    {"folder": _STR}, [],
+)
+SEARCH_FILES = _tool(
+    "search_files",
+    "Find files and folders by name inside the allowed folders. query is one or "
+    "more words that must all appear in the name. folder is optional.",
+    {"query": _STR, "folder": _STR}, ["query"],
+)
+SET_VOLUME = _tool(
+    "set_volume",
+    "Change the PC's sound volume. change is set (with level 0-100), up, down or "
+    "mute_toggle.",
+    {"change": {"type": "string", "enum": ["set", "up", "down", "mute_toggle"]},
+     "level": {"type": "integer"}}, ["change"],
+)
+SCREENSHOT = _tool(
+    "take_screenshot",
+    "Look at the user's screen right now. The picture is for you only and is "
+    "not saved. Use it when you need to see what is on screen.",
     {}, [],
+)
+MOVE = _tool(
+    "move_or_rename",
+    "Move or rename a file or folder inside the allowed folders. Never "
+    "overwrites. The user must say yes first.",
+    {"source": _STR, "destination": _STR}, ["source", "destination"],
+)
+RECYCLE = _tool(
+    "move_to_recycle_bin",
+    "Move a file or folder to the Recycle Bin. This is the ONLY way to delete "
+    "anything, and the user must say yes first. Nothing is ever deleted for good.",
+    {"path": _STR}, ["path"],
+)
+POWERSHELL = _tool(
+    "run_powershell",
+    "Run one PowerShell command on the user's PC. The user is shown the exact "
+    "command and must say yes first. Commands that delete, install software, "
+    "download code, send email or change passwords, accounts or security "
+    "settings are refused.",
+    {"command": _STR}, ["command"],
+)
+TYPE_TEXT = _tool(
+    "type_text",
+    "Type text into another app's window, as if on the keyboard. window_title is "
+    "part of that window's title. Enter is never pressed, so nothing is sent or "
+    "submitted. The user must say yes first.",
+    {"text": _STR, "window_title": _STR}, ["text", "window_title"],
+)
+FILL_FORM = _tool(
+    "fill_form",
+    "Fill in a form in another app: types each value in order, pressing Tab "
+    "between them, starting from the box the cursor is in. Never presses Enter "
+    "or clicks submit. The user must say yes first.",
+    {"values": {"type": "array", "items": _STR}, "window_title": _STR},
+    ["values", "window_title"],
+)
+CONTROL_SCREEN = _tool(
+    "control_screen",
+    "Operate an app through the screen with the mouse and keyboard, for things "
+    "no other tool can do. task is a complete description of what to do. The "
+    "user approves the task, and each click and keystroke, before it happens. "
+    "Slow: prefer any other tool when one fits.",
+    {"task": _STR}, ["task"],
 )
 REMEMBER = _tool(
     "remember_fact",
@@ -113,9 +171,10 @@ RESEARCH_DECISION = _tool(
     ["decision"],
 )
 
-REFLEX_TOOLS = [DATETIME, OPEN, REMEMBER, RECALL, HAND_OFF]
-MAIN_TOOLS = [DATETIME, OPEN, CREATE_FILE, READ_FILE, LIST_FILES, REMEMBER, RECALL,
-              FORGET, START_DEEP, START_RESEARCH]
+REFLEX_TOOLS = [DATETIME, OPEN, SET_VOLUME, REMEMBER, RECALL, HAND_OFF]
+MAIN_TOOLS = [DATETIME, OPEN, SEARCH_FILES, LIST_FOLDER, READ_FILE, SET_VOLUME, SCREENSHOT,
+              CREATE_FILE, MOVE, RECYCLE, POWERSHELL, TYPE_TEXT, FILL_FORM, CONTROL_SCREEN,
+              REMEMBER, RECALL, FORGET, START_DEEP, START_RESEARCH]
 
 
 class ToolError(Exception):
@@ -180,58 +239,6 @@ class ToolBox:
         if not webbrowser.open(url):
             raise ToolError("No web browser could be opened.")
         return f"Opened {url} in the browser."
-
-    # ---- files (workspace only) ------------------------------------------
-    def _safe_path(self, filename: str) -> Path:
-        if not filename.strip():
-            raise ToolError("A file name is needed.")
-        candidate = Path(filename)
-        if candidate.is_absolute() or candidate.drive:
-            raise ToolError("Use a file name inside the workspace, not a full path.")
-        target = (self.workspace / candidate).resolve()
-        if target != self.workspace and self.workspace not in target.parents:
-            raise ToolError("That path is outside the workspace folder, which is not allowed.")
-        if target.suffix.lower() not in TEXT_EXTENSIONS:
-            allowed = ", ".join(sorted(TEXT_EXTENSIONS))
-            raise ToolError(f"Only text files are allowed ({allowed}).")
-        return target
-
-    def _create_text_file(self, args: dict) -> str:
-        target = self._safe_path(self._text(args, "filename"))
-        content = self._text(args, "content", required=False)
-        if target.exists() and args.get("overwrite") is not True:
-            raise ToolError(
-                f"{target.name} already exists. Ask the user whether to overwrite it."
-            )
-        try:
-            target.parent.mkdir(parents=True, exist_ok=True)
-            target.write_text(content, encoding="utf-8")
-        except OSError as e:
-            raise ToolError(f"The file could not be saved: {e}")
-        return f"Saved {target.relative_to(self.workspace)} ({len(content)} characters)."
-
-    def _read_text_file(self, args: dict) -> str:
-        target = self._safe_path(self._text(args, "filename"))
-        if not target.is_file():
-            raise ToolError(f"There is no file called {args['filename']} in the workspace.")
-        if target.stat().st_size > MAX_READ_BYTES:
-            raise ToolError(
-                f"That file is too large to read in one go "
-                f"({target.stat().st_size:,} bytes; the limit is {MAX_READ_BYTES:,})."
-            )
-        try:
-            return target.read_text(encoding="utf-8")
-        except UnicodeDecodeError:
-            raise ToolError("That file is not plain text, so it cannot be read.")
-        except OSError as e:
-            raise ToolError(f"The file could not be read: {e}")
-
-    def _list_workspace_files(self, args: dict) -> str:
-        files = sorted(
-            str(p.relative_to(self.workspace)).replace("\\", "/")
-            for p in self.workspace.rglob("*") if p.is_file()
-        )
-        return "\n".join(files) if files else "The workspace is empty."
 
     # ---- memory ----------------------------------------------------------
     def _remember_fact(self, args: dict) -> str:

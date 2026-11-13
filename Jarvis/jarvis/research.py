@@ -203,10 +203,12 @@ class Researcher:
         ok = True
         max_cost = float(self.cfg.get("max_cost_usd", 3.0))
         nudges = 0
+        gen = self.engine.kill_gen
         try:
             while True:
                 final = self.engine._call("deep", self._system(), job.messages, self._tools(),
-                                          job.usage, extra={"cache_control": {"type": "ephemeral"}})
+                                          job.usage, extra={"cache_control": {"type": "ephemeral"}},
+                                          kill_gen=gen)
                 text = self._collect(job, final).strip()
                 job.messages.append({"role": "assistant", "content": final.content})
                 over_cost = job.usage.cost >= job.cost_allowance
@@ -237,6 +239,8 @@ class Researcher:
                     continue
 
                 answer = self._ask(job, why)
+                if gen != self.engine.kill_gen:
+                    answer = "cancel"
                 job.search_refused = False
                 if answer == "cancel":
                     job.state = "cancelled"

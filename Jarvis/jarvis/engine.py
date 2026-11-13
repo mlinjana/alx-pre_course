@@ -1,5 +1,6 @@
 """The three brains: Reflex answers first, Main does everyday tasks with tools,
 Deep runs long jobs in the background."""
+import json
 import os
 import re
 import threading
@@ -10,6 +11,7 @@ from typing import Callable
 import anthropic
 
 from . import settings
+from .control import Computer, Tier3
 from .memory import Memory
 from .research import TRIGGER as RESEARCH_TRIGGER, Researcher
 from .tools import MAIN_TOOLS, REFLEX_TOOLS, RESEARCH_DECISION, ToolBox, ToolError
@@ -40,7 +42,19 @@ ROLE = {
     ),
     "main": (
         "You are running as JARVIS's Main brain, handling everyday tasks with "
-        "tools. Files can only be created and read inside the workspace folder. "
+        "tools, including control of the user's Windows PC under three safety "
+        "tiers that JARVIS's own code enforces.\n"
+        "Tier 1 (just do it): open apps and websites, search for and read files "
+        "in the allowed folders, change the volume, look at the screen.\n"
+        "Tier 2 (the user must say yes): create, move or rename files, run a "
+        "PowerShell command, type into an app, fill in a form, control the "
+        "screen. Just call the tool: JARVIS shows the user exactly what will "
+        "happen and waits for their yes. Do not ask them yourself first, and if "
+        "they say no, do not retry or find another route.\n"
+        "Tier 3 (never, even if asked): delete anything permanently, make "
+        "payments, send emails or messages, change passwords or security "
+        "settings, install software. Say plainly that you will not. To delete "
+        "something, offer move_to_recycle_bin.\n"
         "If a request needs information from the web, start a background "
         "research job with start_research_job and reply \"On it.\" If it needs a "
         "plan, long writing or long careful thought without the web, use "
@@ -80,6 +94,14 @@ _FINISH = {"finish", "finish it", "write it up", "write the report", "wrap up", 
 _CANCEL = {"cancel", "cancel it", "cancel the research", "cancel the job", "abandon it"}
 _OPEN = {"open it", "open the report", "open", "show me", "show it", "yes open it",
          "open it please"}
+
+
+def is_yes(text: str) -> bool:
+    words = " ".join(re.sub(r"[^a-z' ]", " ", str(text).lower()).split())
+    words = re.sub(r"^(hey )?jarvis ", "", words)
+    return words in _YES or words in {"yes go ahead", "yes do it", "yes please do",
+                                      "go ahead please", "yes that's fine", "confirm",
+                                      "confirmed", "approved", "i confirm"}
 
 
 class Failure(Exception):
@@ -149,12 +171,108 @@ class Engine:
         self.jobs_lock = threading.Lock()
         self.summary_lock = threading.Lock()
         self.cancel_event = threading.Event()
+        self.computer = Computer(self.cfg, settings.WORKSPACE, settings.LOGS, self.log.error)
+        self.confirm: dict | None = None   # a tier 2 action waiting for the user's yes
+        self.kill_gen = 0                  # goes up each time the kill switch is used
 
     def cancel(self) -> None:
         """Stop the chat reply being written right now (background jobs carry on)."""
         self.cancel_event.set()
 
     # ---- building a request ------------------------------------------------
+    # ---- tier 2 confirmation and the kill switch ------------------------------
+    def confirm_action(self, text: str) -> bool:
+        """Show exactly what is about to happen and wait for the user's yes."""
+        box = {"event": threading.Event(), "yes": False}
+        self.confirm = box
+        self.emit({"type": "confirm", "text": text})
+        deadline = time.time() + float(self.computer.cfg.get("confirm_timeout_seconds", 120))
+        timed_out = False
+        while not box["event"].wait(0.2):
+            if self.computer.stop.is_set():
+                break
+            if time.time() > deadline:
+                timed_out = True
+                break
+        self.confirm = None
+        self.emit({"type": "confirm_closed", "yes": box["yes"], "timed_out": timed_out})
+        return box["yes"]
+
+    def answer_confirm(self, text_or_yes) -> bool:
+        """Only a clear yes counts as yes. Returns what was understood."""
+        yes = text_or_yes if isinstance(text_or_yes, bool) else is_yes(text_or_yes)
+        if self.confirm:
+            self.confirm["yes"] = yes
+            self.confirm["event"].set()
+        return yes
+
+    def kill(self) -> None:
+        """The kill switch: stop every action and background job right now."""
+        self.kill_gen += 1
+        self.cancel_event.set()
+        self.computer.kill()
+        if self.confirm:
+            self.confirm["event"].set()
+        for job in self.researcher.jobs.values():
+            if job.state == "waiting":
+                self.researcher.decide(job, "cancel")
+        self.pending = None
+        self.computer.log.write("-", "KILL SWITCH", "all actions and background jobs stopped",
+                                "pressed by the user")
+        self.emit({"type": "killed"})
+
+    def _controlled(self, call, usage: Usage):
+        """Run a computer-control action under its safety tier."""
+        name = call.name
+        args = call.input if isinstance(call.input, dict) else {}
+        c = self.computer
+        tier = c.tier(name)
+        brief = json.dumps(args, ensure_ascii=False)[:300]
+        if tier == 3 or not c.enabled:
+            c.log.write(3, name, brief, "refused (never tier)")
+            return ("This action is in the 'never' tier, so JARVIS will not do it. "
+                    "Tell the user plainly."), True
+        desc = brief
+        try:
+            if name == "control_screen":
+                from .screen import run_task
+                task = str(args.get("task", "")).strip()
+                if not task:
+                    raise ToolError("A task is needed.")
+                each = str((c.cfg.get("screen_control") or {}).get("ask", "every_action")) != "once"
+                desc = ("Take control of the mouse and keyboard to do this:\n  " + task + "\n"
+                        + ("I will ask again before every click and every keystroke."
+                           if each else "After this yes I will not ask again until it is done.")
+                        + " The kill switch stops me at once.")
+                do = lambda: run_task(self, task, usage)
+            elif hasattr(c, "plan_" + name):
+                desc, do = getattr(c, "plan_" + name)(args)
+            else:
+                handler = getattr(c, name, None) or (lambda a: self.tools.run(name, a))
+                if tier == 2:
+                    desc = f"{name.replace('_', ' ')}: {brief}"
+                do = lambda: handler(args)
+            decision = "automatic"
+            if tier == 2:
+                if not self.confirm_action(desc):
+                    c.log.write(2, name, desc, "declined by the user")
+                    return ("The user did not say yes, so this was NOT done. Do not try "
+                            "again or find another way. Tell them it was not done."), True
+                decision = "approved by the user"
+            out = ("(test mode) Approved, but nothing was really done."
+                   if c.dry_run and tier == 2 else do())
+            c.log.write(tier, name, desc, decision, "ok")
+            return out, False
+        except Tier3 as e:
+            c.log.write(3, name, desc, "refused (never tier)", str(e))
+            return str(e) + " This is in the 'never' tier. Tell the user plainly.", True
+        except ToolError as e:
+            c.log.write(tier, name, desc, "not done", str(e))
+            return str(e), True
+        except Exception as e:
+            c.log.write(tier, name, desc, "failed", f"{type(e).__name__}: {e}")
+            return f"It failed: {type(e).__name__}: {e}", True
+
     def _system(self, brain: str, spoken: bool = False) -> list[dict]:
         mem = self.cfg["memory"]
         parts = [f"Current local date and time: "
@@ -166,6 +284,9 @@ class Engine:
         summary = self.memory.get_summary()
         if summary:
             parts.append("Summary of the earlier conversation:\n" + summary)
+        if brain == "main" and self.computer.enabled:
+            parts.append("Allowed folders for file actions: " + self.computer.folders_text()
+                         + ". A path with no folder means the workspace.")
         if brain in ("reflex", "main"):
             status = self.researcher.status_lines()
             if status:
@@ -189,7 +310,8 @@ class Engine:
 
     def _call(self, brain: str, system, messages, tools, usage: Usage,
               on_text: Callable[[str], None] | None = None,
-              on_reset: Callable[[], None] | None = None, extra: dict | None = None):
+              on_reset: Callable[[], None] | None = None, extra: dict | None = None,
+              kill_gen: int | None = None):
         """One streamed API call, retried once if the failure looks temporary."""
         b = self.cfg["brains"][brain]
         kwargs = dict(model=b["model"], max_tokens=int(b.get("max_tokens", 16000)),
@@ -197,7 +319,8 @@ class Engine:
         if b.get("effort"):
             kwargs["output_config"] = {"effort": b["effort"]}
         if tools:
-            kwargs["tools"] = tools
+            hidden = self.computer.hidden_tools()
+            kwargs["tools"] = [t for t in tools if t.get("name") not in hidden]
         if extra:
             kwargs.update(extra)
         if brain == "deep" and b.get("refusal_fallback", True):
@@ -211,6 +334,8 @@ class Engine:
             try:
                 with open_stream() as stream:
                     for event in stream:
+                        if kill_gen is not None and kill_gen != self.kill_gen:
+                            raise Failure("Stopped by the kill switch.")
                         if on_text and self.cancel_event.is_set():
                             try:  # count what was used before the interruption
                                 snap = stream.current_message_snapshot
@@ -294,6 +419,8 @@ class Engine:
                         job = self.start_deep_job(task or user_text)
                         out, err = (f"Background job #{job} started. Tell the user it is "
                                     "running and they will be told when it is done."), False
+                    elif self.computer.tier(call.name) is not None:
+                        out, err = self._controlled(call, usage)
                     else:
                         out, err = self.tools.run(call.name, call.input), False
                 except ToolError as e:
@@ -314,6 +441,7 @@ class Engine:
         usage = Usage()
         brain, ok, answer = "reflex", True, ""
         self.cancel_event.clear()
+        self.computer.stop.clear()
         try:
             history = self.memory.recent_for_prompt()
             ask = {"role": "user", "content": user_text}
@@ -454,7 +582,8 @@ class Engine:
         ok = True
         try:
             messages = history + [{"role": "user", "content": task}]
-            final = self._call("deep", self._system("deep"), messages, None, usage)
+            final = self._call("deep", self._system("deep"), messages, None, usage,
+                               kill_gen=self.kill_gen)
             text = "".join(b.text for b in final.content if b.type == "text").strip()
             if final.stop_reason == "refusal" and not text:
                 raise Failure("The deep brain declined this request for safety reasons.")

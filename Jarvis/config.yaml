@@ -88,3 +88,47 @@ research:
   search_price_per_1000: 10.00  # Anthropic's web search fee in dollars; opening pages has no extra fee
   web_search_tool: web_search_20260318   # tool versions, from Anthropic's docs on 2026-11-13
   web_fetch_tool: web_fetch_20260318
+
+# ---- Computer control: three safety tiers --------------------------------
+# You may move an action DOWN the list to make JARVIS more careful (for example
+# put open_app_or_website under tier_2_ask_first, or any action under
+# tier_3_never). Ask-first actions can never be moved up to tier 1; JARVIS
+# ignores that.
+computer_control:
+  enabled: true
+  allowed_folders:              # file actions work only inside these
+    - workspace                 # = the workspace folder inside the Jarvis folder (C:\Jarvis\workspace)
+    - Documents
+    - Downloads
+  kill_switch_hotkey: ctrl+alt+k   # stops every action and background job at once
+  confirm_timeout_seconds: 120     # no answer in this time counts as "no"
+
+  tier_1_no_ask:                # done straight away
+    - open_app_or_website
+    - search_files
+    - list_folder
+    - read_text_file
+    - set_volume
+    - take_screenshot           # for JARVIS's own eyes; never saved
+  tier_2_ask_first:             # JARVIS shows and says exactly what will happen, then waits for "yes"
+    - create_text_file
+    - move_or_rename
+    - move_to_recycle_bin       # the only way anything is "deleted"; you can restore it
+    - run_powershell
+    - type_text
+    - fill_form
+    - control_screen
+  tier_3_never:                 # no tool exists for these, and JARVIS's code blocks the known routes
+    - delete_permanently
+    - make_payments
+    - send_emails_or_messages
+    - change_passwords_or_security_settings
+    - install_software
+
+  # Controlling apps through the screen with the mouse and keyboard
+  # (Anthropic's computer use tool). OFF until you switch it on - read the
+  # note in HOW_TO_USE.md first.
+  screen_control:
+    enabled: false
+    ask: every_action           # every_action = ask before each click and keystroke; once = ask per task only
+    max_steps: 30

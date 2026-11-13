@@ -120,3 +120,58 @@ Set in `config.yaml` under `research:`. Defaults: 20 searches and an estimated
   "(single source)". That marking is done by the agent, not checked by JARVIS.
 - If you just updated JARVIS, start it with `start_jarvis.bat` once so it can
   install the Word-file part.
+
+# Computer control (Phase 4)
+
+JARVIS's own code decides which tier an action is in; the brain cannot change it.
+The tiers and allowed folders are in `config.yaml` under `computer_control:`.
+
+## Tier 1 - done without asking
+Open apps and websites, find files by name, read text files, list a folder,
+change the volume, look at the screen (the picture is not saved).
+"Find my holiday notes", "Read notes.txt in Documents", "Turn the volume down".
+
+## Tier 2 - JARVIS asks first
+Create a text file, move or rename a file or folder, move something to the
+Recycle Bin, run a PowerShell command, type into an app, fill in a form.
+- JARVIS shows the exact action in yellow under **MAY I DO THIS?** and reads it
+  aloud if voice is on.
+- Answer with the green **Yes, do it** button, or type or say "yes".
+  Anything that is not a clear yes counts as no. No answer in 2 minutes counts as no.
+- It never overwrites an existing file.
+- When typing into an app it never presses Enter, so nothing is sent or submitted.
+
+## Tier 3 - never
+Delete permanently, make payments, send emails or messages, change passwords
+or security settings, install software.
+- "Delete X" becomes "move X to the Recycle Bin", after your yes. You can restore it.
+- PowerShell commands that delete, install, download code, send mail or change
+  accounts/security are refused before you are even asked. This is a list of
+  known commands, not a guarantee, so always read the command before saying yes.
+
+## Allowed folders
+`workspace` (C:\Jarvis\workspace), `Documents`, `Downloads`. File actions outside
+these are refused. Add a line under `allowed_folders:` to allow another folder.
+Note: a PowerShell command you approve is not limited to these folders.
+
+## Kill switch
+Press **Ctrl + Alt + K**, or click the red **STOP ALL** button. It stops the
+current reply, any waiting question, a running PowerShell command, typing,
+screen control, and all background jobs (deep and research). Change the keys
+with `kill_switch_hotkey:` in `config.yaml`.
+
+## Action log
+`logs\actions-DATE.csv` (opens in Excel): time, tier, action, exactly what,
+whether it was automatic / approved / declined / refused, and the result.
+
+## Screen control (mouse and keyboard) - switched OFF
+JARVIS can operate apps through the screen using Anthropic's computer use tool.
+It is off until you set `screen_control: enabled: true` in `config.yaml`.
+Before you do:
+- Anthropic recommends running this in a separate virtual machine, not on a PC
+  with your personal data and logged-in accounts. On your real PC it can see
+  whatever is on screen.
+- It is Tier 2: JARVIS asks before the task, and again before every click and
+  keystroke (`ask: every_action`). It is slow.
+- Close anything sensitive first, watch what it does, and keep a finger near
+  the kill switch.

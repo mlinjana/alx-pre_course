@@ -82,7 +82,8 @@ class Voice:
         """Stop talking and stop the reply that is being written."""
         self.listen_after_speech = False
         self.mouth.stop()
-        self.engine.cancel()
+        if self.engine.confirm is None:    # answering a yes/no must not cancel the task
+            self.engine.cancel()
 
     def close(self) -> None:
         if self.mic:
@@ -191,6 +192,12 @@ class Voice:
             self.mouth.say(f"Background job {ev['job']} is done. The report is on screen.")
         elif kind == "research_done":
             self._say_then_listen(ev["summary"] + " " + ev["question"])
+        elif kind == "confirm":
+            self._say_then_listen("Before I do this, I need your yes. " + ev["text"]
+                                  + " Shall I go ahead?")
+        elif kind == "killed":
+            self.listen_after_speech = False
+            self.mouth.stop()
         elif kind == "research_ask":
             self._say_then_listen(ev["text"])
         elif kind == "research_failed":

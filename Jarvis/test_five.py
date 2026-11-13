@@ -13,8 +13,7 @@ from jarvis.engine import Engine  # noqa: E402
 REQUESTS = [
     ("reflex", "Hello JARVIS, good morning!"),
     ("reflex", "What's the time and date right now?"),
-    ("main", "Create a file called shopping.txt in my workspace containing three "
-             "lines: milk, bread, eggs. Then read it back to me."),
+    ("main", "What files are in my workspace folder?"),
     ("main", "Explain in about five sentences how a home Wi-Fi router works."),
     ("deep", "Research and write a short report (around 400 words) comparing three "
              "ways I could back up my family photos, with a recommendation."),

@@ -20,6 +20,8 @@ class ChatWindow:
         self.today = None
         self.voice = None                # set once the voice parts have loaded
         self.waiting_voice_text = None   # a spoken request that arrived mid-reply
+        self.confirming = False          # a tier 2 action is waiting for yes or no
+        self.kill_listener = None
 
         root.title("JARVIS")
         root.geometry("820x640")
@@ -34,6 +36,7 @@ class ChatWindow:
         self.chat.tag_configure("jarvis", foreground="#7ee787", font=("Segoe UI", 10, "bold"))
         self.chat.tag_configure("note", foreground=DIM, font=("Segoe UI", 9, "italic"))
         self.chat.tag_configure("error", foreground=WARN)
+        self.chat.tag_configure("ask", foreground="#ffd479", font=("Consolas", 10))
 
         self.status = tk.Label(root, text="Starting...", anchor="w", bg=PANEL, fg=DIM,
                                font=("Segoe UI", 9), padx=10, pady=3)
@@ -52,10 +55,24 @@ class ChatWindow:
                                   bg=PANEL, fg=FG, relief="flat", font=("Segoe UI", 9))
         self.talk_btn = tk.Button(vbar, text="Hold to talk", bg=PANEL, fg=FG, relief="flat",
                                   font=("Segoe UI", 9))
+        tk.Button(vbar, text="STOP ALL", command=self._kill, bg="#b3261e", fg="white",
+                  activebackground="#d9392f", relief="flat",
+                  font=("Segoe UI", 9, "bold")).pack(side="right", padx=(0, 10), pady=2)
         self.talk_btn.bind("<ButtonPress-1>", lambda e: self.voice and self.voice.talk_down())
         self.talk_btn.bind("<ButtonRelease-1>", lambda e: self.voice and self.voice.talk_up())
 
+        self.confirm_bar = tk.Frame(root, bg="#3a2a00")
+        tk.Label(self.confirm_bar, text="JARVIS is waiting for your answer:", bg="#3a2a00",
+                 fg="#ffd479", font=("Segoe UI", 10, "bold"), padx=10, pady=6).pack(side="left")
+        tk.Button(self.confirm_bar, text="No, don't", command=lambda: self._answer(False),
+                  bg=PANEL, fg=FG, relief="flat", font=("Segoe UI", 10, "bold"),
+                  padx=14).pack(side="right", padx=(0, 10), pady=5)
+        tk.Button(self.confirm_bar, text="Yes, do it", command=lambda: self._answer(True),
+                  bg="#2e7d32", fg="white", relief="flat", font=("Segoe UI", 10, "bold"),
+                  padx=14).pack(side="right", padx=(0, 6), pady=5)
+
         bottom = tk.Frame(root, bg=PANEL)
+        self.bottom = bottom
         bottom.pack(fill="x")
         self.entry = tk.Text(bottom, height=3, wrap="word", bg="#0b1118", fg=FG,
                              insertbackground=FG, font=("Segoe UI", 11), relief="flat",
@@ -82,6 +99,7 @@ class ChatWindow:
                        "(Shift+Enter makes a new line.)\n")
             self.status.config(text="Ready.")
             self._start_voice()
+            self._start_kill_switch()
         self.root.protocol("WM_DELETE_WINDOW", self._close)
         self.root.after(20, self._poll)
 
@@ -136,7 +154,35 @@ class ChatWindow:
         if self.voice:
             self.voice.interrupt()
 
+    # ---- safety: yes/no answers and the kill switch -------------------------
+    def _answer(self, yes) -> None:
+        if self.confirming and self.engine:
+            self.engine.answer_confirm(yes)
+
+    def _kill(self) -> None:
+        """Stop every action and background job. Safe to call from any thread."""
+        if self.engine:
+            self.engine.kill()
+        if self.voice:
+            self.voice.interrupt()
+
+    def _start_kill_switch(self) -> None:
+        combo = str((self.engine.cfg.get("computer_control") or {})
+                    .get("kill_switch_hotkey", "ctrl+alt+k")).lower().replace(" ", "")
+        self.kill_combo = combo.upper().replace("+", " + ")
+        try:
+            from .control import HotkeyWatcher
+            self.kill_listener = HotkeyWatcher(combo, self._kill)
+            self._line(f"Kill switch: press {self.kill_combo} (or the red STOP ALL button) to "
+                       "stop everything at once.\n", "note")
+        except Exception as e:
+            self.engine.log.error("kill switch", f"{type(e).__name__}: {e}")
+            self._line("The kill-switch hotkey could not be set up; use the red STOP ALL "
+                       "button instead.\n", "error")
+
     def _close(self) -> None:
+        if self.kill_listener:
+            self.kill_listener.stop()
         if self.voice:
             self.voice.close()
         self.root.destroy()
@@ -161,6 +207,14 @@ class ChatWindow:
     def send(self, spoken_text: str | None = None) -> None:
         spoken = spoken_text is not None
         if self.engine is None:
+            return
+        if self.confirming:             # whatever is typed or said now is the yes/no answer
+            text = spoken_text if spoken else self.entry.get("1.0", "end").strip()
+            if text:
+                if not spoken:
+                    self.entry.delete("1.0", "end")
+                self._write(f"\nYou answered: \"{text}\"\n", "you")
+                self.engine.answer_confirm(text)
             return
         if spoken and self.busy:        # the old reply is being stopped; send when it ends
             self.waiting_voice_text = spoken_text
@@ -218,6 +272,25 @@ class ChatWindow:
             if self.waiting_voice_text:
                 text, self.waiting_voice_text = self.waiting_voice_text, None
                 self.send(text)
+        elif kind == "confirm":
+            self.confirming = True
+            self.root.bell()
+            self._write("\n\nMAY I DO THIS?\n", "jarvis")
+            self._write(ev["text"] + "\n", "ask")
+            self._write("Answer yes or no - click a button, type it, or say it.\n", "note")
+            self.confirm_bar.pack(fill="x", before=self.bottom)
+            self.send_btn.config(state="normal")
+            self.root.deiconify()
+        elif kind == "confirm_closed":
+            self.confirming = False
+            self.confirm_bar.pack_forget()
+            if self.busy:
+                self.send_btn.config(state="disabled")
+            self._write("Approved - doing it now.\n\n" if ev["yes"] else
+                        ("No answer in time, so I did NOT do it.\n\n" if ev["timed_out"]
+                         else "Not done.\n\n"), "note")
+        elif kind == "killed":
+            self._write("\nKILL SWITCH: everything has been stopped.\n", "error")
         elif kind == "voice_ready":
             self._voice_ready(ev["voice"])
         elif kind == "voice_off":
@@ -235,7 +308,9 @@ class ChatWindow:
                     text = ev["detail"] + "  " + text
                 self.voice_label.config(text="Voice: " + text)
         elif kind == "heard":
-            if ev.get("stop"):
+            if ev.get("stop") and self.confirming:
+                self._answer(False)
+            elif ev.get("stop"):
                 self.waiting_notices.append(ev) if self.reply_open else self._show_notice(ev)
             else:
                 self.send(ev["text"])
