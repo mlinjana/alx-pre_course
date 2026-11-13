@@ -18,6 +18,8 @@ class ChatWindow:
         self.reply_open = False          # is a JARVIS reply being streamed right now?
         self.waiting_notices: list = []  # background-job news held until the reply ends
         self.today = None
+        self.voice = None                # set once the voice parts have loaded
+        self.waiting_voice_text = None   # a spoken request that arrived mid-reply
 
         root.title("JARVIS")
         root.geometry("820x640")
@@ -37,6 +39,22 @@ class ChatWindow:
                                font=("Segoe UI", 9), padx=10, pady=3)
         self.status.pack(fill="x")
 
+        vbar = tk.Frame(root, bg=PANEL)
+        vbar.pack(fill="x")
+        self.voice_label = tk.Label(vbar, text="Voice: off", anchor="w", bg=PANEL, fg=ACCENT,
+                                    font=("Segoe UI", 9, "bold"), padx=10, pady=3)
+        self.voice_label.pack(side="left", fill="x", expand=True)
+        self.voice_choice = tk.StringVar(value="")
+        self.voice_menu = tk.OptionMenu(vbar, self.voice_choice, "")
+        self.voice_menu.config(bg=PANEL, fg=FG, activebackground=BG, activeforeground=FG,
+                               relief="flat", highlightthickness=0, font=("Segoe UI", 9))
+        self.stop_btn = tk.Button(vbar, text="Stop talking", command=self._stop_talking,
+                                  bg=PANEL, fg=FG, relief="flat", font=("Segoe UI", 9))
+        self.talk_btn = tk.Button(vbar, text="Hold to talk", bg=PANEL, fg=FG, relief="flat",
+                                  font=("Segoe UI", 9))
+        self.talk_btn.bind("<ButtonPress-1>", lambda e: self.voice and self.voice.talk_down())
+        self.talk_btn.bind("<ButtonRelease-1>", lambda e: self.voice and self.voice.talk_up())
+
         bottom = tk.Frame(root, bg=PANEL)
         bottom.pack(fill="x")
         self.entry = tk.Text(bottom, height=3, wrap="word", bg="#0b1118", fg=FG,
@@ -51,7 +69,7 @@ class ChatWindow:
         self.entry.focus_set()
 
         try:
-            self.engine = Engine(self.events.put)
+            self.engine = Engine(self._from_engine)
         except SetupProblem as e:
             self.engine = None
             self._line("JARVIS can't start yet", "error")
@@ -63,7 +81,65 @@ class ChatWindow:
             self._line("Online. Type a message and press Enter. "
                        "(Shift+Enter makes a new line.)\n")
             self.status.config(text="Ready.")
-        self.root.after(40, self._poll)
+            self._start_voice()
+        self.root.protocol("WM_DELETE_WINDOW", self._close)
+        self.root.after(20, self._poll)
+
+    # ---- voice -------------------------------------------------------------
+    def _from_engine(self, ev: dict) -> None:
+        """Brain events go to the voice straight away, then to the window."""
+        if self.voice is not None:
+            try:
+                self.voice.on_engine_event(ev)
+            except Exception:
+                pass
+        self.events.put(ev)
+
+    def _start_voice(self) -> None:
+        vcfg = self.engine.cfg.get("voice") or {}
+        if not vcfg.get("enabled", True):
+            self.voice_label.config(text="Voice: switched off in config.yaml")
+            return
+        self.voice_label.config(text="Voice: starting up...")
+
+        def load():
+            try:
+                from . import voice as voice_mod
+                if not voice_mod.models_ready():
+                    raise RuntimeError("not set up yet - double-click setup_voice.bat")
+                v = voice_mod.Voice(self.engine.cfg, self.events.put, self.engine)
+                self.events.put({"type": "voice_ready", "voice": v})
+            except Exception as e:
+                self.engine.log.error("voice", f"start-up: {type(e).__name__}: {e}")
+                self.events.put({"type": "voice_off", "reason": str(e) or type(e).__name__})
+
+        threading.Thread(target=load, daemon=True).start()
+
+    def _voice_ready(self, v) -> None:
+        self.voice = v
+        voices = v.voices()
+        menu = self.voice_menu["menu"]
+        menu.delete(0, "end")
+        for label in voices:
+            menu.add_command(label=label, command=lambda l=label: self._pick_voice(l))
+        self.voice_choice.set(v.mouth.voice_label)
+        self.talk_btn.pack(side="right", padx=(0, 10))
+        self.stop_btn.pack(side="right", padx=(0, 6))
+        self.voice_menu.pack(side="right", padx=(0, 6))
+        self.voice_label.config(text="Voice: " + v.idle_hint())
+
+    def _pick_voice(self, label: str) -> None:
+        self.voice_choice.set(label)
+        threading.Thread(target=self.voice.set_voice, args=(label,), daemon=True).start()
+
+    def _stop_talking(self) -> None:
+        if self.voice:
+            self.voice.interrupt()
+
+    def _close(self) -> None:
+        if self.voice:
+            self.voice.close()
+        self.root.destroy()
 
     # ---- writing into the chat area ----------------------------------------
     def _write(self, text: str, tag: str | None = None) -> None:
@@ -82,12 +158,21 @@ class ChatWindow:
         self.send()
         return "break"
 
-    def send(self) -> None:
-        text = self.entry.get("1.0", "end").strip()
-        if not text or self.busy or self.engine is None:
+    def send(self, spoken_text: str | None = None) -> None:
+        spoken = spoken_text is not None
+        if self.engine is None:
             return
-        self.entry.delete("1.0", "end")
-        self._line("You", "you")
+        if spoken and self.busy:        # the old reply is being stopped; send when it ends
+            self.waiting_voice_text = spoken_text
+            return
+        text = spoken_text if spoken else self.entry.get("1.0", "end").strip()
+        if not text or self.busy:
+            return
+        if not spoken:
+            self.entry.delete("1.0", "end")
+        if self.voice:
+            self.voice.request_started(spoken)
+        self._line("You (JARVIS heard)" if spoken else "You", "you")
         self._line(text + "\n")
         self._line("JARVIS", "jarvis")
         self.chat.mark_set("reply_start", "end-1c")
@@ -95,7 +180,7 @@ class ChatWindow:
         self.busy = self.reply_open = True
         self.send_btn.config(state="disabled")
         self.status.config(text="Reflex brain is thinking...")
-        threading.Thread(target=self.engine.handle, args=(text,), daemon=True).start()
+        threading.Thread(target=self.engine.handle, args=(text, spoken), daemon=True).start()
 
     # ---- events coming back from the brains --------------------------------
     def _poll(self) -> None:
@@ -104,7 +189,7 @@ class ChatWindow:
                 self._on_event(self.events.get_nowait())
         except queue.Empty:
             pass
-        self.root.after(40, self._poll)
+        self.root.after(20, self._poll)
 
     def _on_event(self, ev: dict) -> None:
         kind = ev["type"]
@@ -130,7 +215,31 @@ class ChatWindow:
             for held in self.waiting_notices:
                 self._show_notice(held)
             self.waiting_notices.clear()
-        elif kind in ("job_done", "job_failed", "job_logged"):
+            if self.waiting_voice_text:
+                text, self.waiting_voice_text = self.waiting_voice_text, None
+                self.send(text)
+        elif kind == "voice_ready":
+            self._voice_ready(ev["voice"])
+        elif kind == "voice_off":
+            self.voice_label.config(text="Voice: off (" + ev["reason"][:90] + "). "
+                                         "Typing still works.")
+        elif kind == "voice_state":
+            if self.voice:
+                key = self.voice.hotkey_name.upper()
+                text = {"idle": self.voice.idle_hint(),
+                        "listening": "Listening...",
+                        "transcribing": "Working out what you said...",
+                        "speaking": f"Speaking - say \"Jarvis, stop\" or press {key} to "
+                                    "interrupt"}.get(ev["state"], ev["state"])
+                if ev.get("detail"):
+                    text = ev["detail"] + "  " + text
+                self.voice_label.config(text="Voice: " + text)
+        elif kind == "heard":
+            if ev.get("stop"):
+                self.waiting_notices.append(ev) if self.reply_open else self._show_notice(ev)
+            else:
+                self.send(ev["text"])
+        elif kind in ("job_done", "job_failed", "job_logged", "voice_timing"):
             if self.reply_open:
                 self.waiting_notices.append(ev)
             else:
@@ -146,6 +255,14 @@ class ChatWindow:
             self.root.bell()
             self._line(f"JARVIS - background job #{ev['job']} did not finish", "jarvis")
             self._line("Sorry - " + ev["text"], "error")
+        elif ev["type"] == "heard":
+            self._line(f"JARVIS heard: \"{ev['text']}\" - stopped.\n", "note")
+        elif ev["type"] == "voice_timing":
+            self._line(f"voice: {ev['stop_to_first_word_ms']:,} ms from when you stopped "
+                       f"speaking to my first word  (waiting for silence "
+                       f"{ev['wait_for_silence_ms']:,}, speech-to-text "
+                       f"{ev['speech_to_text_ms']:,}, brain {ev['brain_first_sentence_ms']:,}, "
+                       f"voice {ev['voice_ms']:,})\n", "note")
         elif ev["type"] == "job_logged":
             self.today = ev["today"]
             self._line(f"deep brain  |  {ev['ms']:,} ms  |  about ${ev['cost']:.4f}\n", "note")

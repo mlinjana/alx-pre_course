@@ -65,3 +65,15 @@ apps:
   outlook: outlook
   task manager: taskmgr.exe
   command prompt: cmd.exe
+
+# ---- Voice ---------------------------------------------------------------
+voice:
+  enabled: true                 # false = text chat only
+  hotkey: f9                    # hold this key to talk; tap it to make JARVIS stop talking
+  voice: Alan (British man)     # starting voice; you can also pick one in the window
+  whisper_model: base.en        # tiny.en = faster, less accurate; small.en = slower, more accurate
+  end_silence_seconds: 0.6      # how long a pause means "I've finished speaking"
+  wait_for_speech_seconds: 6    # after "Jarvis", how long to wait for you to say something
+  wake_word_threshold: 0.25     # lower = wakes more easily (and more often by mistake)
+  wake_word_boost: 1.0          # higher = wakes more easily
+  speak_typed_replies: false    # true = also read out replies to typed messages

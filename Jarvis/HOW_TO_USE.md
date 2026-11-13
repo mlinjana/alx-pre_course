@@ -41,3 +41,47 @@
 - The deep brain has no internet access in Phase 1; it works from what the model knows.
 - If a request fails for a temporary reason (connection, overload), JARVIS retries
   once, then tells you what went wrong.
+
+# Voice (Phase 2)
+
+## One-time setup
+1. Run `start_jarvis.bat` once so the basic setup exists, then close JARVIS.
+2. Double-click `setup_voice.bat` and press Y. It downloads about 350 MB of speech
+   models into `C:\Jarvis\models` and installs the voice packages into
+   `C:\Jarvis\.venv` only. Voice needs Python 3.11 or newer.
+3. Start JARVIS again. The blue line at the bottom of the window shows the voice status.
+
+After setup, listening and speaking run on your PC without internet. Only the
+text of your request goes to Anthropic, exactly as when you type.
+
+## Talking to JARVIS
+- Say **"Jarvis"** then your request, e.g. "Jarvis, what time is it?". You can
+  also say "Jarvis", wait for the beep, then speak.
+- Or **hold F9** (or the "Hold to talk" button), speak, and let go. This is the
+  reliable backup when the wake word does not catch.
+- JARVIS detects when you stop talking (a pause of about 0.6 seconds).
+- What it heard appears in the chat as **You (JARVIS heard)** so you can spot mistakes.
+- To interrupt: say **"Jarvis, stop"**, tap **F9**, or click **Stop talking**.
+- Pick a voice from the menu at the bottom: Alan (British man), Ryan (American
+  man) or Alba (Scottish woman). All three work offline.
+- Typing still works at any time. Typed replies are not read aloud unless you set
+  `speak_typed_replies: true` in `config.yaml`.
+
+## Speed check
+Open a Command Prompt in `C:\Jarvis` and run:
+
+    .venv\Scripts\python.exe speed_check.py
+
+It plays 10 spoken requests into JARVIS (5 quick, 5 normal) and prints a table
+of the time from the end of each request to JARVIS's first spoken word. It makes
+real API calls. Every spoken request is also timed in `logs\voice-DATE.csv`.
+
+## Voice tips
+- Use a headset if you can. With loudspeakers, the microphone hears JARVIS's own
+  voice, which can occasionally set off the wake word.
+- If the wake word triggers by mistake too often, or not often enough, adjust
+  `wake_word_threshold` in `config.yaml`, or rely on F9.
+- If JARVIS cuts you off mid-sentence, raise `end_silence_seconds` (e.g. 0.9).
+  Lower values feel faster.
+- To change the hotkey, edit `hotkey:` in `config.yaml`.
+- If voice fails to start, the blue line says why and typing keeps working.

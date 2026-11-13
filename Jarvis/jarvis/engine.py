@@ -50,6 +50,17 @@ ROLE = {
 }
 
 
+SPOKEN_HINT = (
+    "The user spoke this request aloud and your reply will be read out by a "
+    "voice. Answer in one to three short, natural sentences unless they ask "
+    "for more. Use plain words only: no lists, headings, symbols or formatting."
+)
+
+
+class Interrupted(Exception):
+    """The user told JARVIS to stop while a reply was being written."""
+
+
 class Failure(Exception):
     """An API problem, already put into plain words for the user."""
 
@@ -94,6 +105,7 @@ class LoopResult:
         self.text = ""
         self.handoff: str | None = None
         self.refused = False
+        self.interrupted = False
 
 
 class Engine:
@@ -113,9 +125,14 @@ class Engine:
         self.jobs = 0
         self.jobs_lock = threading.Lock()
         self.summary_lock = threading.Lock()
+        self.cancel_event = threading.Event()
+
+    def cancel(self) -> None:
+        """Stop the chat reply being written right now (background jobs carry on)."""
+        self.cancel_event.set()
 
     # ---- building a request ------------------------------------------------
-    def _system(self, brain: str) -> list[dict]:
+    def _system(self, brain: str, spoken: bool = False) -> list[dict]:
         mem = self.cfg["memory"]
         parts = [f"Current local date and time: "
                  f"{datetime.now().astimezone().strftime('%A, %d %B %Y, %H:%M (%Z)')}"]
@@ -126,6 +143,8 @@ class Engine:
         summary = self.memory.get_summary()
         if summary:
             parts.append("Summary of the earlier conversation:\n" + summary)
+        if spoken:
+            parts.append(SPOKEN_HINT)
         return [
             # Stable part first, marked for prompt caching (tools + this block).
             {"type": "text", "text": self.personality + "\n\n" + ROLE[brain],
@@ -156,6 +175,13 @@ class Engine:
             try:
                 with open_stream() as stream:
                     for event in stream:
+                        if on_text and self.cancel_event.is_set():
+                            try:  # count what was used before the interruption
+                                snap = stream.current_message_snapshot
+                                usage.add(snap.usage, snap.model, self.cfg["prices"])
+                            except Exception:
+                                pass
+                            raise Interrupted()
                         if event.type == "text" and on_text:
                             streamed = True
                             on_text(event.text)
@@ -174,10 +200,10 @@ class Engine:
                 raise Failure(plain_error(e) + tried) from e
 
     def _loop(self, brain: str, messages: list, tools: list, usage: Usage,
-              user_text: str) -> LoopResult:
+              user_text: str, spoken: bool = False) -> LoopResult:
         """Call a brain, run any tools it asks for, repeat until it has answered."""
         result = LoopResult()
-        system = self._system(brain)
+        system = self._system(brain, spoken)
 
         def on_text(chunk: str):
             result.text += chunk
@@ -192,7 +218,11 @@ class Engine:
                 result.text = result.text[:mark]
                 self.emit({"type": "reset", "text": result.text})
 
-            final = self._call(brain, system, messages, tools, usage, on_text, on_reset)
+            try:
+                final = self._call(brain, system, messages, tools, usage, on_text, on_reset)
+            except Interrupted:
+                result.interrupted = True
+                return result
             if final.stop_reason == "refusal":
                 result.refused = True
                 return result
@@ -234,21 +264,26 @@ class Engine:
         return result
 
     # ---- one chat request --------------------------------------------------
-    def handle(self, user_text: str) -> None:
+    def handle(self, user_text: str, spoken: bool = False) -> None:
         """Answer one message from the user. Run this on a background thread."""
         start = time.perf_counter()
         usage = Usage()
         brain, ok, answer = "reflex", True, ""
+        self.cancel_event.clear()
         try:
             history = self.memory.recent_for_prompt()
             ask = {"role": "user", "content": user_text}
-            result = self._loop("reflex", history + [ask], REFLEX_TOOLS, usage, user_text)
-            if result.handoff == "main":
+            result = self._loop("reflex", history + [ask], REFLEX_TOOLS, usage, user_text,
+                                spoken)
+            if result.interrupted:
+                pass
+            elif result.handoff == "main":
                 brain = "main"
                 if result.text:
                     self.emit({"type": "reset", "text": ""})
                 self.emit({"type": "status", "text": "Main brain is working..."})
-                result = self._loop("main", history + [ask], MAIN_TOOLS, usage, user_text)
+                result = self._loop("main", history + [ask], MAIN_TOOLS, usage, user_text,
+                                    spoken)
             elif result.handoff == "deep":
                 job = self.start_deep_job(user_text)
                 brain = f"reflex (started deep job #{job})"
@@ -261,6 +296,10 @@ class Engine:
                 result.text = "I'm not able to help with that request."
                 self.emit({"type": "delta", "text": result.text})
             answer = result.text.strip() or "(no reply)"
+            if result.interrupted:
+                brain += " (interrupted)"
+                answer = (result.text.strip() + " [the user interrupted here]").strip()
+                self.emit({"type": "delta", "text": "  [stopped]"})
             self.memory.add_message("user", user_text)
             self.memory.add_message("assistant", answer)
         except Failure as e:

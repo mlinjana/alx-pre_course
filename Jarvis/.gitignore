@@ -4,3 +4,5 @@ __pycache__/
 logs/
 workspace/
 jarvis_memory.db
+models/
+voice_prefs.json
