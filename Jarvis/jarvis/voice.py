@@ -43,6 +43,7 @@ class Voice:
         self.hotkey_name = str(self.cfg.get("hotkey", "f9")).lower()
         self.hotkey_listener = None
         self.key_down = False
+        self.listen_after_speech = False
 
         prefs = {}
         try:
@@ -79,6 +80,7 @@ class Voice:
 
     def interrupt(self) -> None:
         """Stop talking and stop the reply that is being written."""
+        self.listen_after_speech = False
         self.mouth.stop()
         self.engine.cancel()
 
@@ -187,10 +189,26 @@ class Voice:
             self.mouth.say("Sorry, something went wrong. The details are on screen.")
         elif kind == "job_done":
             self.mouth.say(f"Background job {ev['job']} is done. The report is on screen.")
+        elif kind == "research_done":
+            self._say_then_listen(ev["summary"] + " " + ev["question"])
+        elif kind == "research_ask":
+            self._say_then_listen(ev["text"])
+        elif kind == "research_failed":
+            self.mouth.say(f"Research job {ev['job']} did not finish. The reason is on screen.")
         elif kind == "job_failed":
             self.mouth.say(f"Background job {ev['job']} did not finish.")
 
+    def _say_then_listen(self, text: str) -> None:
+        """Speak, then listen for the answer without needing the wake word."""
+        self.listen_after_speech = True
+        self.mouth.say(text)
+
     def _speaking_changed(self, speaking: bool) -> None:
+        if not speaking and self.listen_after_speech:
+            self.listen_after_speech = False
+            if self.mic is not None:
+                self.ears.listen_now()
+                return
         if self.ears.mode == "idle":      # don't overwrite "Listening..." on screen
             self._state("speaking" if speaking else "idle")
 

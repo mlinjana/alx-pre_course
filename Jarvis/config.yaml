@@ -77,3 +77,14 @@ voice:
   wake_word_threshold: 0.25     # lower = wakes more easily (and more often by mistake)
   wake_word_boost: 1.0          # higher = wakes more easily
   speak_typed_replies: false    # true = also read out replies to typed messages
+
+# ---- Research agent ------------------------------------------------------
+# Runs on the deep brain with Anthropic's web search and web fetch tools.
+research:
+  max_searches: 20              # searches per job; at the limit JARVIS stops and asks you
+  max_cost_usd: 3.00            # estimated cost per job; at the limit JARVIS stops and asks you
+  max_pages: 40                 # most pages one job may open
+  max_page_tokens: 8000         # how much of each page is read (bigger = more thorough, dearer)
+  search_price_per_1000: 10.00  # Anthropic's web search fee in dollars; opening pages has no extra fee
+  web_search_tool: web_search_20260318   # tool versions, from Anthropic's docs on 2026-11-13
+  web_fetch_tool: web_fetch_20260318

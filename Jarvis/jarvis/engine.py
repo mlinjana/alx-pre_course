@@ -1,5 +1,7 @@
 """The three brains: Reflex answers first, Main does everyday tasks with tools,
 Deep runs long jobs in the background."""
+import os
+import re
 import threading
 import time
 from datetime import datetime
@@ -9,7 +11,8 @@ import anthropic
 
 from . import settings
 from .memory import Memory
-from .tools import MAIN_TOOLS, REFLEX_TOOLS, ToolBox, ToolError
+from .research import TRIGGER as RESEARCH_TRIGGER, Researcher
+from .tools import MAIN_TOOLS, REFLEX_TOOLS, RESEARCH_DECISION, ToolBox, ToolError
 from .usage_log import Usage, UsageLog
 
 FALLBACK_BETA = "server-side-fallback-2026-07-01"
@@ -26,18 +29,22 @@ ROLE = {
         "- target 'main' for everyday tasks: working with files, writing, "
         "explaining, multi-step requests, or any fact you are not sure of. Call "
         "the tool without writing any text first.\n"
-        "- target 'deep' for research, planning, reports and hard problems that "
-        "deserve long, careful thought. First write one short sentence telling "
-        "the user you are starting a background job and will tell them when it "
-        "is done, then call the tool.\n"
+        "- target 'research' for anything that needs the web: current events, "
+        "prices, product comparisons, or facts you would have to look up. First "
+        "write just \"On it.\", then call the tool.\n"
+        "- target 'deep' for planning, long writing and hard problems that "
+        "deserve long, careful thought but not the web. First write one short "
+        "sentence telling the user you are starting a background job and will "
+        "tell them when it is done, then call the tool.\n"
         "Never guess. If you are not confident an answer is right, hand off to main."
     ),
     "main": (
         "You are running as JARVIS's Main brain, handling everyday tasks with "
         "tools. Files can only be created and read inside the workspace folder. "
-        "If a request needs research, a plan, a report or long careful thought, "
-        "start a background job with start_deep_job and tell the user it is "
-        "running and that they will be told when it is done."
+        "If a request needs information from the web, start a background "
+        "research job with start_research_job and reply \"On it.\" If it needs a "
+        "plan, long writing or long careful thought without the web, use "
+        "start_deep_job. Either way the user is told when the job is done."
     ),
     "deep": (
         "You are running as JARVIS's Deep brain, working on a background job: "
@@ -59,6 +66,20 @@ SPOKEN_HINT = (
 
 class Interrupted(Exception):
     """The user told JARVIS to stop while a reply was being written."""
+
+
+_YES = {"yes", "yeah", "yep", "yes please", "please do", "sure", "ok", "okay", "go ahead",
+        "do it", "please", "yes do", "of course", "absolutely"}
+_NO = {"no", "nope", "no thanks", "no thank you", "not now", "later", "leave it", "don't",
+       "dont", "no need"}
+_CONTINUE = {"continue", "carry on", "keep going", "go on", "continue please",
+             "keep researching", "continue the research"}
+_FINISH = {"finish", "finish it", "write it up", "write the report", "wrap up", "wrap it up",
+           "stop there", "that's enough", "write it up with what you have",
+           "write the report with what you have"}
+_CANCEL = {"cancel", "cancel it", "cancel the research", "cancel the job", "abandon it"}
+_OPEN = {"open it", "open the report", "open", "show me", "show it", "yes open it",
+         "open it please"}
 
 
 class Failure(Exception):
@@ -123,6 +144,8 @@ class Engine:
         self.log = UsageLog(settings.LOGS)
         self.emit = emit
         self.jobs = 0
+        self.researcher = Researcher(self)
+        self.pending: dict | None = None   # a yes/no question a research job is waiting on
         self.jobs_lock = threading.Lock()
         self.summary_lock = threading.Lock()
         self.cancel_event = threading.Event()
@@ -143,6 +166,17 @@ class Engine:
         summary = self.memory.get_summary()
         if summary:
             parts.append("Summary of the earlier conversation:\n" + summary)
+        if brain in ("reflex", "main"):
+            status = self.researcher.status_lines()
+            if status:
+                parts.append("Background research right now:\n" + "\n".join(status))
+            if self.pending and self.pending["kind"] == "limit":
+                parts.append("A research job is paused and has asked the user whether to "
+                             "continue or to write the report with what it has. If the "
+                             "user answers that, call research_decision.")
+            elif self.pending and self.pending["kind"] == "open":
+                parts.append("You have just asked the user whether to open the finished "
+                             "research report. If they answer that, call research_decision.")
         if spoken:
             parts.append(SPOKEN_HINT)
         return [
@@ -155,7 +189,7 @@ class Engine:
 
     def _call(self, brain: str, system, messages, tools, usage: Usage,
               on_text: Callable[[str], None] | None = None,
-              on_reset: Callable[[], None] | None = None):
+              on_reset: Callable[[], None] | None = None, extra: dict | None = None):
         """One streamed API call, retried once if the failure looks temporary."""
         b = self.cfg["brains"][brain]
         kwargs = dict(model=b["model"], max_tokens=int(b.get("max_tokens", 16000)),
@@ -164,6 +198,8 @@ class Engine:
             kwargs["output_config"] = {"effort": b["effort"]}
         if tools:
             kwargs["tools"] = tools
+        if extra:
+            kwargs.update(extra)
         if brain == "deep" and b.get("refusal_fallback", True):
             open_stream = lambda: self.client.beta.messages.stream(
                 betas=[FALLBACK_BETA], fallbacks="default", **kwargs)
@@ -237,7 +273,7 @@ class Engine:
             handoff = next((c for c in calls if c.name == "hand_off"), None)
             if handoff is not None:
                 target = handoff.input.get("target") if isinstance(handoff.input, dict) else None
-                result.handoff = target if target in ("main", "deep") else "main"
+                result.handoff = target if target in ("main", "research", "deep") else "main"
                 return result
             # Pass the brain's full reply back unchanged, then all tool results together.
             messages.append({"role": "assistant", "content": final.content})
@@ -245,7 +281,15 @@ class Engine:
             for call in calls:
                 self.emit({"type": "status", "text": f"Using tool: {call.name}"})
                 try:
-                    if call.name == "start_deep_job":
+                    if call.name == "start_research_job":
+                        task = call.input.get("task") if isinstance(call.input, dict) else ""
+                        job = self.start_research(task or user_text)
+                        out, err = (f"Research job #{job} started in the background. Reply "
+                                    "\"On it.\" The user is told when the report is ready."), False
+                    elif call.name == "research_decision":
+                        d = call.input.get("decision") if isinstance(call.input, dict) else ""
+                        out, err = self.apply_decision(str(d)), False
+                    elif call.name == "start_deep_job":
                         task = call.input.get("task") if isinstance(call.input, dict) else ""
                         job = self.start_deep_job(task or user_text)
                         out, err = (f"Background job #{job} started. Tell the user it is "
@@ -273,8 +317,17 @@ class Engine:
         try:
             history = self.memory.recent_for_prompt()
             ask = {"role": "user", "content": user_text}
-            result = self._loop("reflex", history + [ask], REFLEX_TOOLS, usage, user_text,
-                                spoken)
+            shortcut = self._shortcut(user_text)
+            if shortcut is not None:
+                # Answered without a brain: a research trigger word, or yes/no to a
+                # question a research job is waiting on.
+                brain, text = shortcut
+                result = LoopResult()
+                result.text = text
+                self.emit({"type": "delta", "text": text})
+            else:
+                tools = REFLEX_TOOLS + ([RESEARCH_DECISION] if self.pending else [])
+                result = self._loop("reflex", history + [ask], tools, usage, user_text, spoken)
             if result.interrupted:
                 pass
             elif result.handoff == "main":
@@ -284,6 +337,12 @@ class Engine:
                 self.emit({"type": "status", "text": "Main brain is working..."})
                 result = self._loop("main", history + [ask], MAIN_TOOLS, usage, user_text,
                                     spoken)
+            elif result.handoff == "research":
+                job = self.start_research(user_text)
+                brain = f"reflex (started research job #{job})"
+                if not result.text.strip():
+                    result.text = "On it."
+                    self.emit({"type": "delta", "text": result.text})
             elif result.handoff == "deep":
                 job = self.start_deep_job(user_text)
                 brain = f"reflex (started deep job #{job})"
@@ -313,13 +372,71 @@ class Engine:
                                f"({type(e).__name__}). Details are in logs/errors.log."})
         ms = int((time.perf_counter() - start) * 1000)
         key = brain.split(" ")[0]
-        today = self.log.record(brain, self.cfg["brains"][key]["model"], ms, usage, ok,
+        model = self.cfg["brains"].get(key, {}).get("model", "none")
+        today = self.log.record(brain, model, ms, usage, ok,
                                 user_text)
         self.emit({"type": "done", "brain": brain, "ms": ms, "cost": usage.cost,
                    "tokens": usage.input + usage.output + usage.cache_read + usage.cache_write,
                    "today": today, "ok": ok})
         if ok:
             threading.Thread(target=self._maybe_summarise, daemon=True).start()
+
+    # ---- research jobs -------------------------------------------------------
+    def start_research(self, task: str) -> int:
+        with self.jobs_lock:
+            self.jobs += 1
+            job = self.jobs
+        self.researcher.start(job, task, self.memory.recent_for_prompt())
+        return job
+
+    def _shortcut(self, user_text: str) -> tuple[str, str] | None:
+        """Things JARVIS handles instantly without asking a brain."""
+        words = re.sub(r"[^a-z' ]", " ", user_text.lower())
+        words = re.sub(r"^\s*(hey\s+)?jarvis\s+", "", " ".join(words.split()))
+        if self.pending and len(words.split()) <= 7:
+            yes = words in _YES or words.startswith(("yes ", "yeah ", "sure ", "ok ", "okay "))
+            no = words in _NO or words.startswith(("no ", "nope ", "not now"))
+            if self.pending["kind"] == "limit":
+                d = ("cancel" if words in _CANCEL else "finish" if words in _FINISH or no
+                     else "continue" if yes or words in _CONTINUE else None)
+            else:
+                d = "open_report" if yes or words in _OPEN else "leave" if no else None
+            if d:
+                return "shortcut (no brain needed)", self.apply_decision(d)
+        if RESEARCH_TRIGGER.match(user_text):
+            job = self.start_research(user_text)
+            return (f"research (started job #{job})",
+                    f"On it. Research job {job} is running in the background, and you can "
+                    "keep talking to me.")
+        return None
+
+    def apply_decision(self, decision: str) -> str:
+        """Carry out the user's answer to a research question. Returns what to tell them."""
+        if decision in ("continue", "finish", "cancel"):
+            job = self.researcher.waiting_job()
+            if job is None:
+                return "No research job is waiting for an answer."
+            self.pending = None
+            self.researcher.decide(job, decision)
+            return {"continue": "Continuing the research.",
+                    "finish": "All right, I'll write the report with what I have.",
+                    "cancel": "Research cancelled."}[decision]
+        path = (self.pending or {}).get("path")
+        if not path:
+            done = [j for j in self.researcher.jobs.values() if j.file]
+            path = str(done[-1].file) if done else None
+        self.pending = None
+        if decision == "leave":
+            return "All right. It's in the workspace research folder whenever you want it."
+        if not path or not os.path.exists(path):
+            return "I can't find a finished report to open."
+        if self.tools.dry_run:
+            return f"(test mode) Would open {os.path.basename(path)}."
+        try:
+            os.startfile(path)  # opens it in Word, as a double-click would
+        except (AttributeError, OSError) as e:
+            return f"I couldn't open the report: {e}"
+        return "Opening it now."
 
     # ---- deep background jobs ----------------------------------------------
     def start_deep_job(self, task: str) -> int:

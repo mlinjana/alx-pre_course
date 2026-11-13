@@ -30,6 +30,14 @@ if errorlevel 1 goto setup_failed
 if errorlevel 1 goto setup_failed
 
 :have_venv
+rem If JARVIS was updated and needs new parts, install them (inside this folder only).
+fc /b requirements.txt ".venv\requirements.installed" >nul 2>nul
+if not errorlevel 1 goto parts_ok
+echo  Updating JARVIS parts in this folder...
+".venv\Scripts\python.exe" -m pip install --quiet --disable-pip-version-check -r requirements.txt
+if errorlevel 1 echo  Could not update just now - JARVIS will start anyway.
+if not errorlevel 1 copy /y requirements.txt ".venv\requirements.installed" >nul
+:parts_ok
 if exist ".env" goto have_env
 copy /y ".env.example" ".env" >nul
 echo.

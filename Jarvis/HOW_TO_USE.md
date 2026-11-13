@@ -85,3 +85,38 @@ real API calls. Every spoken request is also timed in `logs\voice-DATE.csv`.
   Lower values feel faster.
 - To change the hotkey, edit `hotkey:` in `config.yaml`.
 - If voice fails to start, the blue line says why and typing keeps working.
+
+# Research agent (Phase 3)
+
+## Starting a research job
+- Start a message with **research**, **find out** or **compare**, typed or spoken:
+  "Research the best way to back up family photos", "Find out when the next
+  bank holiday is", "Compare three robot vacuums under 300 dollars".
+- JARVIS also starts one by itself when a request needs the web.
+- It answers "On it" and works in the background. Keep chatting meanwhile; ask
+  "how is the research going?" for a progress count.
+
+## What you get
+- A Word file in `workspace\research`, named with the date and topic.
+- JARVIS reads out a three-sentence summary and asks whether to open the report.
+  Answer yes or no, by voice or typing.
+- In the report: links only to pages the agent actually opened, a list of every
+  page opened and every search run, and a final section "What I couldn't verify".
+  Under it, "Automatic checks by JARVIS" lists links it removed because the page
+  was never opened, quotes it could not find word for word in those pages, and
+  figures it could not find exactly as written.
+
+## Limits
+Set in `config.yaml` under `research:`. Defaults: 20 searches and an estimated
+3 dollars per job. At either limit JARVIS stops and asks. Answer **continue**,
+**write it up**, or **cancel**.
+- The cost is checked between steps, so a job can go somewhat over before it stops.
+- Each search costs a fee on top of the normal usage; opening pages does not.
+
+## Good to know
+- A research job is lost if you close JARVIS while it is running.
+- Pages that need a login or are built entirely by scripts usually cannot be opened.
+- The agent is told to mark any number it found on only one page with
+  "(single source)". That marking is done by the agent, not checked by JARVIS.
+- If you just updated JARVIS, start it with `start_jarvis.bat` once so it can
+  install the Word-file part.

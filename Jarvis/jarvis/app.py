@@ -239,7 +239,8 @@ class ChatWindow:
                 self.waiting_notices.append(ev) if self.reply_open else self._show_notice(ev)
             else:
                 self.send(ev["text"])
-        elif kind in ("job_done", "job_failed", "job_logged", "voice_timing"):
+        elif kind in ("job_done", "job_failed", "job_logged", "voice_timing",
+                      "research_ask", "research_done", "research_failed"):
             if self.reply_open:
                 self.waiting_notices.append(ev)
             else:
@@ -255,6 +256,26 @@ class ChatWindow:
             self.root.bell()
             self._line(f"JARVIS - background job #{ev['job']} did not finish", "jarvis")
             self._line("Sorry - " + ev["text"], "error")
+        elif ev["type"] == "research_ask":
+            self.root.bell()
+            self._line(f"JARVIS - research job #{ev['job']} needs your answer", "jarvis")
+            self._line(ev["text"])
+            self._line("Answer by typing or saying: continue, write it up, or cancel.\n", "note")
+        elif ev["type"] == "research_done":
+            self.root.bell()
+            self._line(f"JARVIS - research job #{ev['job']} is done: {ev['title']}", "jarvis")
+            self._line(ev["summary"])
+            self._line(f"Saved as {ev['file']}   ({ev['searches']} searches, {ev['pages']} "
+                       f"pages opened, about ${ev['cost']:.2f}, {ev['checks']} automatic "
+                       "check notes in the report)", "note")
+            if not ev["word"]:
+                self._line("The Word-file part is not installed, so this was saved as a "
+                           "text file. Run start_jarvis.bat again to update.", "error")
+            self._line(ev["question"] + "\n")
+        elif ev["type"] == "research_failed":
+            self.root.bell()
+            self._line(f"JARVIS - research job #{ev['job']} did not finish", "jarvis")
+            self._line("Sorry - " + ev["text"] + "\n", "error")
         elif ev["type"] == "heard":
             self._line(f"JARVIS heard: \"{ev['text']}\" - stopped.\n", "note")
         elif ev["type"] == "voice_timing":
@@ -265,7 +286,8 @@ class ChatWindow:
                        f"voice {ev['voice_ms']:,})\n", "note")
         elif ev["type"] == "job_logged":
             self.today = ev["today"]
-            self._line(f"deep brain  |  {ev['ms']:,} ms  |  about ${ev['cost']:.4f}\n", "note")
+            self._line(f"background job #{ev['job']}  |  {ev['ms']:,} ms  |  "
+                       f"about ${ev['cost']:.4f}\n", "note")
             if not self.busy:
                 self.status.config(text=f"Ready.   Today so far: about ${self.today:.4f}")
 

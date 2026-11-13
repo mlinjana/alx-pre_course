@@ -78,10 +78,12 @@ FORGET = _tool(
 )
 HAND_OFF = _tool(
     "hand_off",
-    "Pass the user's request to a bigger brain. target 'main' is for everyday "
-    "tasks; target 'deep' is for research, planning, reports and hard problems "
-    "and runs as a background job.",
-    {"target": {"type": "string", "enum": ["main", "deep"]}}, ["target"],
+    "Pass the user's request on. target 'main' is for everyday tasks; target "
+    "'research' starts a background web research job (anything that needs "
+    "current or looked-up information from the internet); target 'deep' starts a "
+    "background job for planning, long writing and hard problems that need "
+    "careful thought but not the web.",
+    {"target": {"type": "string", "enum": ["main", "research", "deep"]}}, ["target"],
 )
 START_DEEP = _tool(
     "start_deep_job",
@@ -91,9 +93,29 @@ START_DEEP = _tool(
     {"task": _STR}, ["task"],
 )
 
+START_RESEARCH = _tool(
+    "start_research_job",
+    "Start a background web research job: it searches the web, opens and "
+    "cross-checks pages, and saves a Word report. Use it for anything that needs "
+    "current or looked-up information. Write task as a complete brief. Reply to "
+    "the user with a short 'On it' - they are told when the report is ready.",
+    {"task": _STR}, ["task"],
+)
+RESEARCH_DECISION = _tool(
+    "research_decision",
+    "Pass on the user's answer to a question a research job is waiting on. "
+    "continue = keep researching past the limit; finish = write the report now "
+    "with what it has; cancel = abandon the job; open_report = open the finished "
+    "Word report; leave = do not open it. Only call this when the user has "
+    "clearly answered that question.",
+    {"decision": {"type": "string",
+                  "enum": ["continue", "finish", "cancel", "open_report", "leave"]}},
+    ["decision"],
+)
+
 REFLEX_TOOLS = [DATETIME, OPEN, REMEMBER, RECALL, HAND_OFF]
 MAIN_TOOLS = [DATETIME, OPEN, CREATE_FILE, READ_FILE, LIST_FILES, REMEMBER, RECALL,
-              FORGET, START_DEEP]
+              FORGET, START_DEEP, START_RESEARCH]
 
 
 class ToolError(Exception):
