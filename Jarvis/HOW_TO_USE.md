@@ -175,3 +175,41 @@ Before you do:
   keystroke (`ask: every_action`). It is slow.
 - Close anything sensitive first, watch what it does, and keep a finger near
   the kill switch.
+
+# Speed (Phase 5)
+
+## Measuring before and after
+Open a Command Prompt in `C:\Jarvis` and run:
+
+    .venv\Scripts\python.exe benchmark.py
+
+It sends 10 quick and 10 normal requests by text and by voice, first with the
+speed improvements off and then on, and prints a before-and-after table of
+speed and cost. The table is also saved in `logs`. Add `--silent` to keep it
+quiet, or `--text-only` to skip voice. It makes about 80 real API calls and
+takes roughly 10 to 15 minutes. It uses a temporary memory, and nothing on your
+PC is opened or changed.
+
+## What was changed for speed
+- The reflex now answers more by itself: short explanations, simple how-to
+  questions, sums, a sentence or two of writing, and finding, listing or reading
+  files. Anything that changes something still goes to the main brain.
+- The main brain runs at low effort (`effort: low` in `config.yaml`). If
+  everyday answers feel thin, change it to `medium`.
+- At start-up JARVIS opens its connection and stores the fixed part of its
+  prompts in Anthropic's cache (`performance: prewarm`).
+- In multi-step tasks the main brain's conversation is cached between steps.
+- Speech-to-text uses an NVIDIA graphics card automatically if one works; the
+  blue voice line then says "(speech-to-text on graphics card)". If a card is
+  found but cannot be used, the reason is in `logs\errors.log`.
+
+## Graphics card for speech-to-text
+This needs an NVIDIA card plus NVIDIA's CUDA 12 and cuDNN 9 libraries, which are
+a system-wide install. JARVIS does not install them. Without them it simply
+uses the processor, as before.
+
+## Tool calls in parallel
+When a brain asks for several things in one go, they all come back in a single
+round. JARVIS runs them one after another on purpose: its own tools take
+milliseconds, and running four file searches on separate threads measured
+slower (about 1.2 seconds against 0.09), and order matters for ask-first actions.

@@ -53,6 +53,8 @@ class Voice:
         self.mouth = Mouth(MODELS, prefs.get("voice") or self.cfg.get("voice", ""), sink=sink,
                            on_first_audio=self._first_audio, on_state=self._speaking_changed)
         self.stt = Transcriber(MODELS, self.cfg)
+        if self.stt.note:
+            engine.log.error("voice", self.stt.note)
         self.ears = Ears(MODELS, self.cfg, self.work.put)
         self.mic = Microphone(self.ears.feed) if mic else None
         threading.Thread(target=self._work_loop, daemon=True).start()
@@ -65,7 +67,8 @@ class Voice:
         self.to_ui({"type": "voice_state", "state": state, "detail": detail})
 
     def idle_hint(self) -> str:
-        return f"Say \"Jarvis\" or hold {self.hotkey_name.upper()} to talk"
+        chip = " (speech-to-text on graphics card)" if self.stt.device == "cuda" else ""
+        return f"Say \"Jarvis\" or hold {self.hotkey_name.upper()} to talk{chip}"
 
     def voices(self) -> list[str]:
         return self.mouth.available_voices()

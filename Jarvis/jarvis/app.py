@@ -100,6 +100,7 @@ class ChatWindow:
             self.status.config(text="Ready.")
             self._start_voice()
             self._start_kill_switch()
+            threading.Thread(target=self.engine.prewarm, daemon=True).start()
         self.root.protocol("WM_DELETE_WINDOW", self._close)
         self.root.after(20, self._poll)
 

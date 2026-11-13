@@ -254,12 +254,16 @@ def run_task(engine, task: str, usage) -> str:
     screen = Screen(engine.computer.stop)
     screen.remember_window()
     messages = [{"role": "user", "content": "Begin."}]
-    system = RULES.format(task=task)
+    # Cache the instructions, the toolset and the growing run of screenshots, so
+    # each step only pays full price for what is new.
+    system = [{"type": "text", "text": RULES.format(task=task),
+               "cache_control": {"type": "ephemeral"}}]
+    extra = {"cache_control": {"type": "ephemeral"}, "output_config": {"effort": "medium"}}
     declined = False
     for _ in range(int(cfg.get("max_steps", 30))):
         try:
             final = engine._call("main", system, messages, [{"type": TOOLSET}], usage,
-                                 on_text=lambda _t: None)
+                                 on_text=lambda _t: None, extra=extra)
         except Interrupted:
             return "Screen control was stopped."
         calls = [b for b in final.content if b.type == "tool_use"]

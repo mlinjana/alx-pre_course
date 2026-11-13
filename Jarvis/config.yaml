@@ -7,7 +7,7 @@ brains:
     max_tokens: 4000
   main:                         # everyday tasks, with tools
     model: claude-sonnet-5-5
-    effort: medium
+    effort: low                 # Anthropic suggests low or medium for chat; raise to medium if answers feel thin
     max_tokens: 16000
   deep:                         # research, planning, reports - runs in the background
     model: claude-fable-5-2
@@ -71,6 +71,7 @@ voice:
   enabled: true                 # false = text chat only
   hotkey: f9                    # hold this key to talk; tap it to make JARVIS stop talking
   voice: Alan (British man)     # starting voice; you can also pick one in the window
+  speech_to_text_device: auto   # auto = use an NVIDIA graphics card if it works, else the processor; or cpu
   whisper_model: base.en        # tiny.en = faster, less accurate; small.en = slower, more accurate
   end_silence_seconds: 0.6      # how long a pause means "I've finished speaking"
   wait_for_speech_seconds: 6    # after "Jarvis", how long to wait for you to say something
@@ -132,3 +133,7 @@ computer_control:
     enabled: false
     ask: every_action           # every_action = ask before each click and keystroke; once = ask per task only
     max_steps: 30
+
+# ---- Speed ----------------------------------------------------------------
+performance:
+  prewarm: true                 # at start-up, open the connection and cache the fixed prompts

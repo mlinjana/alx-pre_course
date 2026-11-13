@@ -198,10 +198,45 @@ class Transcriber:
 
     def __init__(self, models_dir: Path, cfg: dict):
         from faster_whisper import WhisperModel
-        self.model = WhisperModel(
-            cfg.get("whisper_model", "base.en"), device="cpu", compute_type="int8",
-            download_root=str(models_dir / "whisper"))
-        self.transcribe(np.zeros(RATE, np.float32))  # warm up so the first request is fast
+        name = cfg.get("whisper_model", "base.en")
+        root = str(models_dir / "whisper")
+        want = str(cfg.get("speech_to_text_device", "auto")).lower()
+        self.device, self.note = "cpu", ""
+        self.model = None
+        if want in ("auto", "gpu", "cuda"):
+            self.model = self._try_gpu(WhisperModel, name, root)
+        if self.model is None:
+            self.model = WhisperModel(name, device="cpu", compute_type="int8", download_root=root)
+            self.transcribe(np.zeros(RATE, np.float32))  # warm up so the first request is fast
+
+    def _try_gpu(self, WhisperModel, name: str, root: str):
+        """Use an NVIDIA graphics card if one is present and its CUDA libraries load."""
+        import os
+        import shutil
+        import site
+        try:
+            for base in site.getsitepackages():       # libraries installed with pip, if any
+                nv = os.path.join(base, "nvidia")
+                if os.path.isdir(nv) and hasattr(os, "add_dll_directory"):
+                    for sub in os.listdir(nv):
+                        d = os.path.join(nv, sub, "bin")
+                        if os.path.isdir(d):
+                            os.add_dll_directory(d)
+            import ctranslate2
+            if ctranslate2.get_cuda_device_count() < 1:
+                if shutil.which("nvidia-smi"):
+                    self.note = ("An NVIDIA graphics card was found, but its CUDA 12 "
+                                 "libraries were not, so speech-to-text is using the processor.")
+                return None
+            model = WhisperModel(name, device="cuda", compute_type="float16", download_root=root)
+            self.model, self.device = model, "cuda"
+            self.transcribe(np.zeros(RATE, np.float32))   # proves the card really works
+            return model
+        except Exception as e:
+            self.device = "cpu"
+            self.note = ("A graphics card was found but could not be used for speech-to-text "
+                         f"({type(e).__name__}: {str(e)[:120]}), so the processor is used.")
+            return None
 
     def transcribe(self, audio: np.ndarray) -> str:
         segments, _info = self.model.transcribe(

@@ -52,7 +52,7 @@ def make_speech(text: str) -> np.ndarray:
     return np.interp(np.linspace(0, len(a) - 1, n), np.arange(len(a)), a).astype(np.float32)
 
 
-def run(silent: bool, engine=None) -> list[dict]:
+def run(silent: bool, engine=None, requests=None) -> list[dict]:
     ui: queue.Queue = queue.Queue()
     holder = {}
 
@@ -67,10 +67,10 @@ def run(silent: bool, engine=None) -> list[dict]:
                             sink=SilentSink() if silent else None)
     holder["voice"] = voice
     rows = []
-    for kind, text in REQUESTS:
+    for kind, text in (requests or REQUESTS):
         speech = make_speech("Jarvis, " + text)
         audio = np.concatenate([np.zeros(RATE // 2, np.float32), speech])
-        row = {"kind": kind, "said": text, "heard": "", "brain": "", "total": None}
+        row = {"kind": kind, "said": text, "heard": "", "brain": "", "total": None, "cost": 0.0}
         state = {"done": False, "timing": None, "t_true_stop": None, "t_first": None}
         voice.mouth.on_first_audio = lambda t, s=state, v=voice: (s.update(t_first=t),
                                                                  v._first_audio(t))
@@ -101,6 +101,7 @@ def run(silent: bool, engine=None) -> list[dict]:
                         state["timing"] = ev
                     elif ev["type"] == "done":
                         row["brain"] = ev["brain"] if ev["ok"] else "FAILED"
+                        row["cost"] = ev.get("cost", 0.0)
                         state["done"] = True
                     elif ev["type"] == "error":
                         row["error"] = ev["text"]
@@ -111,6 +112,10 @@ def run(silent: bool, engine=None) -> list[dict]:
             quiet = (not voice.mouth.speaking and voice.mouth.sentences.empty()
                      and voice.mouth.audio.empty())
             if "t_done" in state and quiet and time.time() - state["t_done"] > 0.8:
+                break
+            if state["t_true_stop"] and not row["heard"] and \
+                    time.time() > state["t_true_stop"] + 8:
+                row["error"] = "the wake word was not caught"
                 break
             if deadline and time.time() > deadline:
                 row["error"] = row.get("error", "timed out")
@@ -125,6 +130,7 @@ def run(silent: bool, engine=None) -> list[dict]:
               f"{(str(row['total']) + ' ms') if row['total'] is not None else row.get('error', 'no speech')}",
               flush=True)
         time.sleep(1.0)
+    voice.close()
     return rows
 
 

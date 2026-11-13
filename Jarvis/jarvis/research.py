@@ -204,9 +204,10 @@ class Researcher:
         max_cost = float(self.cfg.get("max_cost_usd", 3.0))
         nudges = 0
         gen = self.engine.kill_gen
+        system = self._system()      # built once so the cached prompt never changes mid-job
         try:
             while True:
-                final = self.engine._call("deep", self._system(), job.messages, self._tools(),
+                final = self.engine._call("deep", system, job.messages, self._tools(),
                                           job.usage, extra={"cache_control": {"type": "ephemeral"}},
                                           kill_gen=gen)
                 text = self._collect(job, final).strip()

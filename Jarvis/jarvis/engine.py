@@ -14,7 +14,8 @@ from . import settings
 from .control import Computer, Tier3
 from .memory import Memory
 from .research import TRIGGER as RESEARCH_TRIGGER, Researcher
-from .tools import MAIN_TOOLS, REFLEX_TOOLS, RESEARCH_DECISION, ToolBox, ToolError
+from .tools import (MAIN_TOOLS, REFLEX_TOOLS, REFLEX_TOOLS_BEFORE, RESEARCH_DECISION, ToolBox,
+                    ToolError)
 from .usage_log import Usage, UsageLog
 
 FALLBACK_BETA = "server-side-fallback-2026-07-01"
@@ -24,13 +25,17 @@ ROLE = {
     "reflex": (
         "You are running as JARVIS's Reflex brain: the fastest of three brains, "
         "and the first to see every request.\n"
-        "Answer yourself, straight away and briefly, when the request is a "
-        "greeting or small talk, a simple well-known fact, the date or time, "
-        "remembering or recalling a fact, or opening an app or website.\n"
-        "For anything else call the hand_off tool:\n"
-        "- target 'main' for everyday tasks: working with files, writing, "
-        "explaining, multi-step requests, or any fact you are not sure of. Call "
-        "the tool without writing any text first.\n"
+        "Answer yourself, straight away, whenever you can do it well: greetings "
+        "and small talk; the date or time; well-known facts; short explanations "
+        "and simple how-to questions on everyday topics; simple sums and unit "
+        "conversions; a sentence or two of writing; remembering, recalling or "
+        "forgetting a fact; opening an app or website; changing the volume; and "
+        "finding, listing or reading files in the allowed folders.\n"
+        "Call the hand_off tool for everything else:\n"
+        "- target 'main' for anything that creates, moves, renames or removes a "
+        "file, runs a command, types into an app or needs the screen; for longer "
+        "writing or analysis; for requests with several steps; and for any fact "
+        "you are not sure of. Call the tool without writing any text first.\n"
         "- target 'research' for anything that needs the web: current events, "
         "prices, product comparisons, or facts you would have to look up. First "
         "write just \"On it.\", then call the tool.\n"
@@ -70,6 +75,30 @@ ROLE = {
     ),
 }
 
+
+# The narrower reflex wording used before the speed work. benchmark.py uses it
+# to measure "before" and "after" in one run.
+ROLE_BEFORE = {
+    "reflex": (
+        "You are running as JARVIS's Reflex brain: the fastest of three brains, "
+        "and the first to see every request.\n"
+        "Answer yourself, straight away and briefly, when the request is a "
+        "greeting or small talk, a simple well-known fact, the date or time, "
+        "remembering or recalling a fact, or opening an app or website.\n"
+        "For anything else call the hand_off tool:\n"
+        "- target 'main' for everyday tasks: working with files, writing, "
+        "explaining, multi-step requests, or any fact you are not sure of. Call "
+        "the tool without writing any text first.\n"
+        "- target 'research' for anything that needs the web: current events, "
+        "prices, product comparisons, or facts you would have to look up. First "
+        "write just \"On it.\", then call the tool.\n"
+        "- target 'deep' for planning, long writing and hard problems that "
+        "deserve long, careful thought but not the web. First write one short "
+        "sentence telling the user you are starting a background job and will "
+        "tell them when it is done, then call the tool.\n"
+        "Never guess. If you are not confident an answer is right, hand off to main."
+    ),
+}
 
 SPOKEN_HINT = (
     "The user spoke this request aloud and your reply will be read out by a "
@@ -155,13 +184,18 @@ class Engine:
     """emit(event) is called with dicts: delta, reset, status, done, error,
     job_done, job_failed. It may be called from any thread."""
 
-    def __init__(self, emit: Callable[[dict], None]):
+    def __init__(self, emit: Callable[[dict], None], profile: str | None = None,
+                 db_path=None):
         settings.ensure_folders()
         self.cfg = settings.load_config()
         self.personality = settings.load_personality()
         # max_retries=0: JARVIS does its own single retry (see _call).
         self.client = anthropic.Anthropic(api_key=settings.load_api_key(), max_retries=0)
-        self.memory = Memory(settings.DB_PATH)
+        self.memory = Memory(db_path or settings.DB_PATH)
+        # profile "before" switches the speed improvements off, for benchmark.py only.
+        self.fast = profile != "before"
+        if not self.fast:
+            self.cfg["brains"]["main"]["effort"] = "medium"
         self.tools = ToolBox(self.memory, settings.WORKSPACE, self.cfg["apps"])
         self.log = UsageLog(settings.LOGS)
         self.emit = emit
@@ -284,7 +318,7 @@ class Engine:
         summary = self.memory.get_summary()
         if summary:
             parts.append("Summary of the earlier conversation:\n" + summary)
-        if brain == "main" and self.computer.enabled:
+        if self.computer.enabled and (brain == "main" or (brain == "reflex" and self.fast)):
             parts.append("Allowed folders for file actions: " + self.computer.folders_text()
                          + ". A path with no folder means the workspace.")
         if brain in ("reflex", "main"):
@@ -302,11 +336,66 @@ class Engine:
             parts.append(SPOKEN_HINT)
         return [
             # Stable part first, marked for prompt caching (tools + this block).
-            {"type": "text", "text": self.personality + "\n\n" + ROLE[brain],
+            {"type": "text", "text": self._stable_system(brain),
              "cache_control": {"type": "ephemeral"}},
             # Changing part after the cache marker so it never spoils the cache.
             {"type": "text", "text": "\n\n".join(parts)},
         ]
+
+    def _stable_system(self, brain: str) -> str:
+        role = ROLE_BEFORE[brain] if (not self.fast and brain in ROLE_BEFORE) else ROLE[brain]
+        return self.personality + "\n\n" + role
+
+    def _reflex_tools(self) -> list:
+        return REFLEX_TOOLS if self.fast else REFLEX_TOOLS_BEFORE
+
+    def prewarm(self) -> None:
+        """At start-up: open the connection to Anthropic and store the fixed part of
+        the reflex and main prompts in the cache, so the first request is not slower
+        than the rest. Costs a fraction of a cent. Failure here is harmless."""
+        if not (self.fast and (self.cfg.get("performance") or {}).get("prewarm", True)):
+            return
+        hidden = self.computer.hidden_tools()
+        for brain, tools in (("reflex", self._reflex_tools()), ("main", MAIN_TOOLS)):
+            b = self.cfg["brains"][brain]
+            kwargs = dict(
+                model=b["model"], max_tokens=0,
+                system=[{"type": "text", "text": self._stable_system(brain),
+                         "cache_control": {"type": "ephemeral"}}],
+                tools=[t for t in tools if t.get("name") not in hidden],
+                messages=[{"role": "user", "content": "Hello"}])
+            if b.get("effort"):
+                kwargs["output_config"] = {"effort": b["effort"]}
+            try:
+                self.client.messages.create(**kwargs)
+            except Exception as e:
+                self.log.error("prewarm", f"{brain}: {type(e).__name__}: {str(e)[:200]}")
+                return
+
+    def _run_tool(self, call, user_text: str, usage: Usage):
+        """Carry out one tool call. Returns (result, is_error)."""
+        try:
+            if call.name == "start_research_job":
+                task = call.input.get("task") if isinstance(call.input, dict) else ""
+                job = self.start_research(task or user_text)
+                return (f"Research job #{job} started in the background. Reply "
+                        "\"On it.\" The user is told when the report is ready."), False
+            if call.name == "research_decision":
+                d = call.input.get("decision") if isinstance(call.input, dict) else ""
+                return self.apply_decision(str(d)), False
+            if call.name == "start_deep_job":
+                task = call.input.get("task") if isinstance(call.input, dict) else ""
+                job = self.start_deep_job(task or user_text)
+                return (f"Background job #{job} started. Tell the user it is "
+                        "running and they will be told when it is done."), False
+            if self.computer.tier(call.name) is not None:
+                return self._controlled(call, usage)
+            return self.tools.run(call.name, call.input), False
+        except ToolError as e:
+            return str(e), True
+        except Exception as e:  # a bug in a tool must not crash the chat
+            self.log.error("tool", f"{call.name}: {type(e).__name__}: {e}")
+            return f"The tool failed unexpectedly: {type(e).__name__}", True
 
     def _call(self, brain: str, system, messages, tools, usage: Usage,
               on_text: Callable[[str], None] | None = None,
@@ -365,6 +454,9 @@ class Engine:
         """Call a brain, run any tools it asks for, repeat until it has answered."""
         result = LoopResult()
         system = self._system(brain, spoken)
+        # In a tool loop the main brain re-reads the whole conversation each round;
+        # caching it makes the later rounds faster and cheaper.
+        extra = {"cache_control": {"type": "ephemeral"}} if (self.fast and brain == "main") else None
 
         def on_text(chunk: str):
             result.text += chunk
@@ -380,7 +472,8 @@ class Engine:
                 self.emit({"type": "reset", "text": result.text})
 
             try:
-                final = self._call(brain, system, messages, tools, usage, on_text, on_reset)
+                final = self._call(brain, system, messages, tools, usage, on_text, on_reset,
+                                   extra=extra)
             except Interrupted:
                 result.interrupted = True
                 return result
@@ -405,29 +498,12 @@ class Engine:
             results = []
             for call in calls:
                 self.emit({"type": "status", "text": f"Using tool: {call.name}"})
-                try:
-                    if call.name == "start_research_job":
-                        task = call.input.get("task") if isinstance(call.input, dict) else ""
-                        job = self.start_research(task or user_text)
-                        out, err = (f"Research job #{job} started in the background. Reply "
-                                    "\"On it.\" The user is told when the report is ready."), False
-                    elif call.name == "research_decision":
-                        d = call.input.get("decision") if isinstance(call.input, dict) else ""
-                        out, err = self.apply_decision(str(d)), False
-                    elif call.name == "start_deep_job":
-                        task = call.input.get("task") if isinstance(call.input, dict) else ""
-                        job = self.start_deep_job(task or user_text)
-                        out, err = (f"Background job #{job} started. Tell the user it is "
-                                    "running and they will be told when it is done."), False
-                    elif self.computer.tier(call.name) is not None:
-                        out, err = self._controlled(call, usage)
-                    else:
-                        out, err = self.tools.run(call.name, call.input), False
-                except ToolError as e:
-                    out, err = str(e), True
-                except Exception as e:  # a bug in a tool must not crash the chat
-                    self.log.error("tool", f"{call.name}: {type(e).__name__}: {e}")
-                    out, err = f"The tool failed unexpectedly: {type(e).__name__}", True
+            # When the brain asks for several things at once they all come back in this
+            # one round. They are run one after another on purpose: JARVIS's own tools
+            # finish in milliseconds, and running them on separate threads measured
+            # slower (see HOW_TO_USE.md), while keeping order keeps ask-first actions safe.
+            outs = [self._run_tool(c, user_text, usage) for c in calls]
+            for call, (out, err) in zip(calls, outs):
                 results.append({"type": "tool_result", "tool_use_id": call.id,
                                 "content": out, "is_error": err})
             messages.append({"role": "user", "content": results})
@@ -454,7 +530,7 @@ class Engine:
                 result.text = text
                 self.emit({"type": "delta", "text": text})
             else:
-                tools = REFLEX_TOOLS + ([RESEARCH_DECISION] if self.pending else [])
+                tools = self._reflex_tools() + ([RESEARCH_DECISION] if self.pending else [])
                 result = self._loop("reflex", history + [ask], tools, usage, user_text, spoken)
             if result.interrupted:
                 pass
